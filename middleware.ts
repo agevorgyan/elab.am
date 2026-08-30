@@ -2,15 +2,40 @@ import { NextRequest, NextResponse } from 'next/server';
 
 const SESSION_COOKIE_NAME = 'elab_session_token';
 
-// Unprotected public admin routes
-const PUBLIC_ADMIN_PATHS = ['/admin/login', '/admin/forgot-password'];
+// Public Admin Authentication Routes (Rule #5)
+const PUBLIC_ADMIN_PATHS = [
+  '/admin/login',
+  '/admin/forgot-password',
+  '/admin/reset-password',
+];
 
 export function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
   const sessionToken = req.cookies.get(SESSION_COOKIE_NAME)?.value;
 
-  // Protect all /admin/* routes except public admin paths
-  if (pathname.startsWith('/admin') && !PUBLIC_ADMIN_PATHS.includes(pathname)) {
+  // Pass current pathname to downstream Server Components via request headers
+  const requestHeaders = new Headers(req.headers);
+  requestHeaders.set('x-pathname', pathname);
+
+  const isPublicAdminRoute = PUBLIC_ADMIN_PATHS.includes(pathname);
+
+  // CASE 1, 2, 8: Public admin routes requested by unauthenticated users -> Allow rendering
+  if (isPublicAdminRoute) {
+    // CASE 7: Authenticated user attempting to open public login route -> Redirect to /admin/dashboard
+    if (sessionToken) {
+      const dashboardUrl = new URL('/admin/dashboard', req.url);
+      return NextResponse.redirect(dashboardUrl);
+    }
+
+    return NextResponse.next({
+      request: {
+        headers: requestHeaders,
+      },
+    });
+  }
+
+  // CASE 3, 4: Protected /admin/* routes requested by unauthenticated users -> Redirect to login with redirect param
+  if (pathname.startsWith('/admin')) {
     if (!sessionToken) {
       const loginUrl = new URL('/admin/login', req.url);
       loginUrl.searchParams.set('redirect', pathname);
@@ -18,13 +43,11 @@ export function middleware(req: NextRequest) {
     }
   }
 
-  // Prevent authenticated users from returning to login / forgot-password
-  if (PUBLIC_ADMIN_PATHS.includes(pathname) && sessionToken) {
-    const dashboardUrl = new URL('/admin/dashboard', req.url);
-    return NextResponse.redirect(dashboardUrl);
-  }
-
-  return NextResponse.next();
+  return NextResponse.next({
+    request: {
+      headers: requestHeaders,
+    },
+  });
 }
 
 export const config = {

@@ -4,6 +4,7 @@ import prisma from '@/lib/prisma';
 import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
 import { hasPermission, Permission } from '@/lib/rbac';
+export { getSafeRedirectUrl } from '@/lib/redirect';
 
 export const SESSION_COOKIE_NAME = 'elab_session_token';
 const SESSION_EXPIRATION_DAYS = 7;
@@ -14,7 +15,7 @@ const SESSION_EXPIRATION_DAYS = 7;
 export async function hashPassword(password: string): Promise<string> {
   return await argon2.hash(password, {
     type: argon2.argon2id,
-    memoryCost: 65536, // 64 MB
+    memoryCost: 65536,
     timeCost: 3,
     parallelism: 4,
   });

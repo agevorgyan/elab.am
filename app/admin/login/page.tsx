@@ -1,13 +1,17 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, Suspense } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { BrandLogo } from '@/components/ui/BrandLogo';
+import { getSafeRedirectUrl } from '@/lib/redirect';
 import { ShieldCheck, Lock, Mail, ArrowRight, AlertCircle, KeyRound, CheckCircle2 } from 'lucide-react';
 
-export default function AdminLoginPage() {
+function AdminLoginForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const rawRedirect = searchParams ? searchParams.get('redirect') : null;
+
   const [email, setEmail] = useState('hello@elab.am');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -33,7 +37,8 @@ export default function AdminLoginPage() {
       if (!res.ok || !data.success) {
         setErrorMsg(data.error || 'Invalid email or password.');
       } else {
-        router.push('/admin/dashboard');
+        const targetUrl = getSafeRedirectUrl(rawRedirect);
+        router.push(targetUrl);
         router.refresh();
       }
     } catch {
@@ -54,86 +59,82 @@ export default function AdminLoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#090a0f] text-[#f8fafc] flex flex-col justify-center items-center p-4 relative">
+    <div className="w-full max-w-md space-y-8">
       
-      <div className="w-full max-w-md space-y-8">
-        
-        {/* Centralized Managed eLab Brand Logo in Admin Login (Rule #8) */}
-        <div className="text-center space-y-4">
-          <BrandLogo href="/" className="h-14 sm:h-16 w-auto mx-auto" />
+      {/* Centralized Managed eLab Brand Logo in Admin Login */}
+      <div className="text-center space-y-4">
+        <BrandLogo href="/" className="h-14 sm:h-16 w-auto mx-auto" />
 
-          <p className="text-xs text-slate-400">
-            Secure Admin Workspace · Argon2id Authentication
-          </p>
+        <p className="text-xs text-slate-400">
+          Secure Admin Workspace · Argon2id Authentication
+        </p>
+      </div>
+
+      {/* Login Card */}
+      <form
+        onSubmit={handleLogin}
+        className="p-8 rounded-3xl bg-[#141722] border border-white/10 shadow-2xl space-y-6"
+      >
+        <div className="space-y-1.5 text-xs">
+          <label className="font-bold text-slate-[#f8fafc] uppercase tracking-wider">Email Address</label>
+          <div className="relative">
+            <Mail className="w-4 h-4 text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
+            <input
+              type="email"
+              required
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="hello@elab.am"
+              className="w-full pl-10 pr-4 py-3 rounded-xl bg-[#0b0c10] border border-white/10 text-white font-bold focus:outline-none focus:border-[#00dc93]"
+            />
+          </div>
         </div>
 
-        {/* Login Card */}
-        <form
-          onSubmit={handleLogin}
-          className="p-8 rounded-3xl bg-[#141722] border border-white/10 shadow-2xl space-y-6"
+        <div className="space-y-1.5 text-xs">
+          <div className="flex items-center justify-between">
+            <label className="font-bold text-slate-300 uppercase tracking-wider">Password</label>
+            <button
+              type="button"
+              onClick={() => setForgotModal(true)}
+              className="text-[11px] text-[#00dc93] hover:underline"
+            >
+              Forgot password?
+            </button>
+          </div>
+          <div className="relative">
+            <Lock className="w-4 h-4 text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
+            <input
+              type="password"
+              required
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="••••••••••••"
+              className="w-full pl-10 pr-4 py-3 rounded-xl bg-[#0b0c10] border border-white/10 text-white font-bold focus:outline-none focus:border-[#00dc93]"
+            />
+          </div>
+        </div>
+
+        {/* Generic Security Error Message */}
+        {errorMsg && (
+          <div className="p-3.5 rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 text-xs flex items-center gap-2">
+            <AlertCircle className="w-4 h-4 shrink-0" />
+            <span>{errorMsg}</span>
+          </div>
+        )}
+
+        <button
+          type="submit"
+          disabled={loading}
+          className="w-full py-4 rounded-xl bg-[#00dc93] hover:bg-[#38ef7d] text-black font-black text-xs shadow-xl shadow-[#00dc93]/20 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
         >
-          <div className="space-y-1.5 text-xs">
-            <label className="font-bold text-slate-300 uppercase tracking-wider">Email Address</label>
-            <div className="relative">
-              <Mail className="w-4 h-4 text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
-              <input
-                type="email"
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="hello@elab.am"
-                className="w-full pl-10 pr-4 py-3 rounded-xl bg-[#0b0c10] border border-white/10 text-white font-bold focus:outline-none focus:border-[#00dc93]"
-              />
-            </div>
-          </div>
+          <span>{loading ? 'Authenticating...' : 'Sign In to Admin Workspace'}</span>
+          <ArrowRight className="w-4 h-4" />
+        </button>
+      </form>
 
-          <div className="space-y-1.5 text-xs">
-            <div className="flex items-center justify-between">
-              <label className="font-bold text-slate-300 uppercase tracking-wider">Password</label>
-              <button
-                type="button"
-                onClick={() => setForgotModal(true)}
-                className="text-[11px] text-[#00dc93] hover:underline"
-              >
-                Forgot password?
-              </button>
-            </div>
-            <div className="relative">
-              <Lock className="w-4 h-4 text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
-              <input
-                type="password"
-                required
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••••••"
-                className="w-full pl-10 pr-4 py-3 rounded-xl bg-[#0b0c10] border border-white/10 text-white font-bold focus:outline-none focus:border-[#00dc93]"
-              />
-            </div>
-          </div>
-
-          {/* Generic Security Error Message */}
-          {errorMsg && (
-            <div className="p-3.5 rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 text-xs flex items-center gap-2">
-              <AlertCircle className="w-4 h-4 shrink-0" />
-              <span>{errorMsg}</span>
-            </div>
-          )}
-
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full py-4 rounded-xl bg-[#00dc93] hover:bg-[#38ef7d] text-black font-black text-xs shadow-xl shadow-[#00dc93]/20 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
-          >
-            <span>{loading ? 'Authenticating...' : 'Sign In to Admin Workspace'}</span>
-            <ArrowRight className="w-4 h-4" />
-          </button>
-        </form>
-
-        <div className="text-center text-xs text-slate-500 flex items-center justify-center gap-2">
-          <ShieldCheck className="w-4 h-4 text-[#00dc93]" />
-          <span>Argon2id Hashed Session Security</span>
-        </div>
-
+      <div className="text-center text-xs text-slate-500 flex items-center justify-center gap-2">
+        <ShieldCheck className="w-4 h-4 text-[#00dc93]" />
+        <span>Argon2id Hashed Session Security</span>
       </div>
 
       {/* Forgot Password Reset Modal */}
@@ -196,6 +197,16 @@ export default function AdminLoginPage() {
         </div>
       )}
 
+    </div>
+  );
+}
+
+export default function AdminLoginPage() {
+  return (
+    <div className="min-h-screen bg-[#090a0f] text-[#f8fafc] flex flex-col justify-center items-center p-4 relative">
+      <Suspense fallback={<div className="text-xs text-slate-400">Loading auth portal...</div>}>
+        <AdminLoginForm />
+      </Suspense>
     </div>
   );
 }

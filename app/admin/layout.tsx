@@ -19,6 +19,12 @@ import {
   ChevronRight,
 } from 'lucide-react';
 
+const PUBLIC_ADMIN_PATHS = [
+  '/admin/login',
+  '/admin/forgot-password',
+  '/admin/reset-password',
+];
+
 export default async function AdminLayout({
   children,
 }: {
@@ -27,16 +33,19 @@ export default async function AdminLayout({
   const headerList = await headers();
   const pathname = headerList.get('x-pathname') || '/admin/dashboard';
 
-  if (pathname === '/admin/login' || pathname === '/admin/forgot-password') {
+  // Allow unauthenticated rendering for public authentication routes without duplicate redirects (Rules #5, #19)
+  if (PUBLIC_ADMIN_PATHS.includes(pathname)) {
     return <>{children}</>;
   }
 
+  // Server-side database session verification (Rule #6, #7, #13)
   const currentAdmin = await getCurrentAdmin();
 
   if (!currentAdmin) {
     redirect(`/admin/login?redirect=${encodeURIComponent(pathname)}`);
   }
 
+  // Server-side RBAC Permission Verification for requested path
   const requiredPermission = ROUTE_PERMISSIONS[pathname];
   if (requiredPermission && !hasPermission(currentAdmin.role, requiredPermission)) {
     redirect('/admin/dashboard');
@@ -61,7 +70,7 @@ export default async function AdminLayout({
       <aside className="w-64 bg-[#0d0e14] border-r border-white/10 flex flex-col justify-between p-5 shrink-0 hidden md:flex">
         <div className="space-y-8">
           
-          {/* Centralized Managed eLab Brand Logo in Admin Layout */}
+          {/* Centralized Managed eLab Brand Logo */}
           <div>
             <BrandLogo href="/admin/dashboard" className="h-12 sm:h-14 w-auto" />
             <div className="text-[10px] text-[#00dc93] font-bold uppercase tracking-widest mt-1 flex items-center gap-1">

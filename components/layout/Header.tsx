@@ -87,7 +87,7 @@ export const Header: React.FC<HeaderProps> = ({
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between">
           
-          {/* Centralized Managed eLab Brand Logo (Rules #5, #13) */}
+          {/* Centralized Managed eLab Brand Logo */}
           <div className="z-50">
             <BrandLogo href="/" className="h-14 sm:h-16 w-auto" />
           </div>
@@ -155,7 +155,7 @@ export const Header: React.FC<HeaderProps> = ({
         </div>
       </div>
 
-      {/* Full-Screen Overlay Menu with Centralized Managed Logo (Rule #6) */}
+      {/* Full-Screen Overlay Menu */}
       {menuOpen && (
         <div
           id="burger-menu-overlay"
@@ -186,14 +186,14 @@ export const Header: React.FC<HeaderProps> = ({
                 {servicesOpen && (
                   <div className="pl-4 sm:pl-8 space-y-2 pt-2 border-l-2 border-[#00dc93]/30 animate-fadeIn">
                     {serviceSubmenu.map((sub) => (
-                      <a
+                      <Link
                         key={sub.label}
                         href={sub.href}
                         onClick={() => setMenuOpen(false)}
                         className="block text-sm sm:text-base font-bold text-slate-300 hover:text-[#00dc93] transition-colors"
                       >
                         {sub.label}
-                      </a>
+                      </Link>
                     ))}
                   </div>
                 )}
@@ -204,7 +204,7 @@ export const Header: React.FC<HeaderProps> = ({
                   onClick={() => setWorkOpen(!workOpen)}
                   className="text-3xl sm:text-4xl lg:text-5xl font-black text-white hover:text-[#00dc93] transition-colors flex items-center gap-4 tracking-tight"
                 >
-                  <span>Work & Cases</span>
+                  <span>Work &amp; Cases</span>
                   <ChevronDown className={`w-8 h-8 text-[#00dc93] transition-transform duration-300 ${workOpen ? 'rotate-180' : ''}`} />
                 </button>
 
@@ -225,73 +225,73 @@ export const Header: React.FC<HeaderProps> = ({
               </div>
 
               <div>
-                <a
+                <Link
                   href="/#why-us"
                   onClick={() => setMenuOpen(false)}
                   className="text-3xl sm:text-4xl lg:text-5xl font-black text-white hover:text-[#00dc93] transition-colors inline-block tracking-tight"
                 >
                   Why eLab
-                </a>
+                </Link>
               </div>
 
               <div>
-                <a
+                <Link
                   href="/#process"
                   onClick={() => setMenuOpen(false)}
                   className="text-3xl sm:text-4xl lg:text-5xl font-black text-white hover:text-[#00dc93] transition-colors inline-block tracking-tight"
                 >
                   Process
-                </a>
+                </Link>
               </div>
 
               <div>
-                <a
+                <Link
                   href="/#pricing"
                   onClick={() => setMenuOpen(false)}
                   className="text-3xl sm:text-4xl lg:text-5xl font-black text-white hover:text-[#00dc93] transition-colors inline-block tracking-tight"
                 >
                   Pricing
-                </a>
+                </Link>
               </div>
 
               <div>
-                <a
+                <Link
                   href="/#faq"
                   onClick={() => setMenuOpen(false)}
                   className="text-3xl sm:text-4xl lg:text-5xl font-black text-white hover:text-[#00dc93] transition-colors inline-block tracking-tight"
                 >
                   FAQ
-                </a>
+                </Link>
               </div>
 
               <div>
-                <a
+                <Link
                   href="/#contact"
                   onClick={() => setMenuOpen(false)}
                   className="text-3xl sm:text-4xl lg:text-5xl font-black text-white hover:text-[#00dc93] transition-colors inline-block tracking-tight"
                 >
                   Contact
-                </a>
+                </Link>
               </div>
             </nav>
 
             <div className="lg:col-span-5 space-y-8 p-8 rounded-3xl bg-[#141722] border border-white/10 shadow-2xl">
               <div className="space-y-3">
                 <span className="text-xs font-bold text-[#00dc93] uppercase tracking-widest block">
-                  Let's Build Something Better
+                  Let&apos;s Build Something Better
                 </span>
                 <h3 className="text-xl sm:text-2xl font-black text-white leading-tight">
-                  Have a project in mind? Let's engineer your digital solution.
+                  Have a project in mind? Let&apos;s engineer your digital solution.
                 </h3>
               </div>
 
-              <a
+              <Link
                 href="/#contact"
                 onClick={() => setMenuOpen(false)}
                 className="w-full py-4 rounded-2xl bg-[#00dc93] hover:bg-[#38ef7d] text-black font-black text-sm flex items-center justify-center gap-2 shadow-xl shadow-[#00dc93]/20 hover:scale-[1.02] transition-all"
               >
                 <span>Start a Project →</span>
-              </a>
+              </Link>
 
               <div className="space-y-3 pt-4 border-t border-white/10 text-xs">
                 <a href="tel:+37455776066" className="flex items-center gap-3 text-white hover:text-[#00dc93] transition-colors font-bold text-sm">
