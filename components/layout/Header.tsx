@@ -3,17 +3,32 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Language, TRANSLATIONS } from '@/lib/translations';
-import { Menu, X, Phone, Globe, ChevronRight } from 'lucide-react';
+import { Menu, X, Phone, ChevronRight } from 'lucide-react';
 
 interface HeaderProps {
-  lang: Language;
-  onLanguageChange: (newLang: Language) => void;
+  lang?: Language;
+  onLanguageChange?: (newLang: Language) => void;
 }
 
-export const Header: React.FC<HeaderProps> = ({ lang, onLanguageChange }) => {
-  const t = TRANSLATIONS[lang].nav;
+export const Header: React.FC<HeaderProps> = ({
+  lang = 'hy',
+  onLanguageChange,
+}) => {
+  const [currentLang, setCurrentLang] = useState<Language>(lang);
+  const t = TRANSLATIONS[currentLang].nav;
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  useEffect(() => {
+    setCurrentLang(lang);
+  }, [lang]);
+
+  const handleLangSelect = (l: Language) => {
+    setCurrentLang(l);
+    if (onLanguageChange) {
+      onLanguageChange(l);
+    }
+  };
 
   useEffect(() => {
     const handleScroll = () => {
@@ -24,14 +39,14 @@ export const Header: React.FC<HeaderProps> = ({ lang, onLanguageChange }) => {
   }, []);
 
   const navLinks = [
-    { href: '#services', label: t.services },
-    { href: '#portfolio', label: t.portfolio },
-    { href: '#why-us', label: t.whyUs },
-    { href: '#process', label: t.process },
-    { href: '#pricing', label: t.pricing },
-    { href: '#tech', label: t.tech },
-    { href: '#faq', label: t.faq },
-    { href: '#contact', label: t.contact },
+    { href: '/#services', label: t.services },
+    { href: '/#portfolio', label: t.portfolio },
+    { href: '/#why-us', label: t.whyUs },
+    { href: '/#process', label: t.process },
+    { href: '/#pricing', label: t.pricing },
+    { href: '/#tech', label: t.tech },
+    { href: '/#faq', label: t.faq },
+    { href: '/#contact', label: t.contact },
   ];
 
   return (
@@ -42,6 +57,7 @@ export const Header: React.FC<HeaderProps> = ({ lang, onLanguageChange }) => {
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between">
+          
           {/* Brand Logo */}
           <Link href="/" className="flex items-center gap-3 group">
             <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-[#00dc93] to-[#3b82f6] p-[2px] shadow-lg shadow-[#00dc93]/20 transition-transform group-hover:scale-105">
@@ -73,16 +89,17 @@ export const Header: React.FC<HeaderProps> = ({ lang, onLanguageChange }) => {
             ))}
           </nav>
 
-          {/* Right Action Controls: Lang Switcher + Primary CTA */}
+          {/* Right Controls */}
           <div className="hidden lg:flex items-center gap-4">
-            {/* Language Toggle */}
+            {/* Language Selector */}
             <div className="flex items-center bg-[#141722] border border-white/10 rounded-full p-1 text-xs">
               {(['hy', 'en', 'ru'] as Language[]).map((l) => (
                 <button
                   key={l}
-                  onClick={() => onLanguageChange(l)}
+                  type="button"
+                  onClick={() => handleLangSelect(l)}
                   className={`px-2.5 py-1 rounded-full font-bold uppercase transition-all ${
-                    lang === l
+                    currentLang === l
                       ? 'bg-[#00dc93] text-black shadow-md shadow-[#00dc93]/30'
                       : 'text-slate-400 hover:text-white'
                   }`}
@@ -92,7 +109,7 @@ export const Header: React.FC<HeaderProps> = ({ lang, onLanguageChange }) => {
               ))}
             </div>
 
-            {/* Direct Call Quick Link */}
+            {/* Direct Phone Call */}
             <a
               href="tel:+37455776066"
               className="flex items-center gap-2 text-xs text-slate-300 hover:text-[#00dc93] font-medium transition-colors border border-white/10 px-3 py-2 rounded-full bg-white/5"
@@ -103,7 +120,7 @@ export const Header: React.FC<HeaderProps> = ({ lang, onLanguageChange }) => {
 
             {/* Primary CTA */}
             <a
-              href="#contact"
+              href="/#contact"
               className="relative group overflow-hidden rounded-full p-[1px] font-semibold text-xs transition-all duration-300 hover:shadow-lg hover:shadow-[#00dc93]/30"
             >
               <span className="absolute inset-0 bg-gradient-to-r from-[#00dc93] via-[#38ef7d] to-[#3b82f6] rounded-full transition-transform group-hover:scale-105" />
@@ -114,16 +131,16 @@ export const Header: React.FC<HeaderProps> = ({ lang, onLanguageChange }) => {
             </a>
           </div>
 
-          {/* Mobile Navigation Toggle Button */}
+          {/* Mobile Drawer Toggle */}
           <div className="flex lg:hidden items-center gap-3">
-            {/* Mobile Lang Selector */}
             <div className="flex items-center bg-[#141722] border border-white/10 rounded-full p-0.5 text-[11px]">
               {(['hy', 'en', 'ru'] as Language[]).map((l) => (
                 <button
                   key={l}
-                  onClick={() => onLanguageChange(l)}
+                  type="button"
+                  onClick={() => handleLangSelect(l)}
                   className={`px-2 py-0.5 rounded-full font-bold uppercase ${
-                    lang === l ? 'bg-[#00dc93] text-black' : 'text-slate-400'
+                    currentLang === l ? 'bg-[#00dc93] text-black' : 'text-slate-400'
                   }`}
                 >
                   {l}
@@ -132,19 +149,21 @@ export const Header: React.FC<HeaderProps> = ({ lang, onLanguageChange }) => {
             </div>
 
             <button
+              type="button"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              aria-label="Toggle Navigation Menu"
+              aria-label="Toggle Menu"
               className="p-2.5 rounded-xl bg-[#141722] border border-white/10 text-white hover:text-[#00dc93] transition-colors"
             >
               {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
             </button>
           </div>
+
         </div>
       </div>
 
-      {/* Mobile Drawer Menu */}
+      {/* Mobile Menu */}
       {mobileMenuOpen && (
-        <div className="lg:hidden fixed inset-x-0 top-[70px] bg-[#0b0c10]/95 backdrop-blur-xl border-b border-white/10 py-6 px-6 shadow-2xl transition-all animate-fadeIn">
+        <div className="lg:hidden fixed inset-x-0 top-[70px] bg-[#0b0c10]/95 backdrop-blur-xl border-b border-white/10 py-6 px-6 shadow-2xl transition-all">
           <div className="flex flex-col gap-4">
             {navLinks.map((link) => (
               <a
@@ -168,7 +187,7 @@ export const Header: React.FC<HeaderProps> = ({ lang, onLanguageChange }) => {
               </a>
 
               <a
-                href="#contact"
+                href="/#contact"
                 onClick={() => setMobileMenuOpen(false)}
                 className="w-full text-center py-3.5 rounded-xl bg-gradient-to-r from-[#00dc93] to-[#38ef7d] text-black font-bold text-sm shadow-lg shadow-[#00dc93]/20"
               >

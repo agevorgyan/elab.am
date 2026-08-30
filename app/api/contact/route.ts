@@ -3,9 +3,15 @@ import { NextResponse } from 'next/server';
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { name, company, phone, email, projectType, budget, message } = body;
+    const { name, company, phone, email, projectType, budget, message, honeypot } = body;
 
-    // Server-Side Input Validation
+    // Rule #24: Spam Protection Honeypot
+    if (honeypot && honeypot.length > 0) {
+      // Quietly reject bot submissions
+      return NextResponse.json({ success: true, message: 'Inquiry received.' });
+    }
+
+    // Rule #21 & #22: Input Validation
     if (!name || typeof name !== 'string' || name.trim().length === 0) {
       return NextResponse.json(
         { success: false, message: 'Name is required.' },
@@ -20,17 +26,35 @@ export async function POST(request: Request) {
       );
     }
 
-    // In a real production setup, send email via Resend/SendGrid/SMTP or log lead into CRM
-    console.log('[eLab Lead Submission Received]:', {
+    // Rule #23: Form Destination Configuration via Environment Variables
+    const webhookUrl = process.env.CONTACT_WEBHOOK_URL;
+    const notificationEmail = process.env.CONTACT_EMAIL || 'info@elab.am';
+
+    const leadPayload = {
       timestamp: new Date().toISOString(),
-      name,
-      company: company || 'N/A',
-      phone,
-      email: email || 'N/A',
+      name: name.trim(),
+      company: (company || 'N/A').trim(),
+      phone: phone.trim(),
+      email: (email || 'N/A').trim(),
       projectType,
       budget,
-      message: message || 'N/A',
-    });
+      message: (message || 'N/A').trim(),
+      destinationEmail: notificationEmail,
+    };
+
+    if (webhookUrl) {
+      try {
+        await fetch(webhookUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(leadPayload),
+        });
+      } catch (webhookErr) {
+        console.warn('Webhook dispatch failed:', webhookErr);
+      }
+    }
+
+    console.log('[eLab Lead Submitted Successfully]:', leadPayload);
 
     return NextResponse.json({
       success: true,
