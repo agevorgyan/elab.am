@@ -2,6 +2,7 @@ import argon2 from 'argon2';
 import crypto from 'crypto';
 import prisma from '@/lib/prisma';
 import { cookies } from 'next/headers';
+import { NextResponse } from 'next/server';
 
 export const SESSION_COOKIE_NAME = 'elab_session_token';
 const SESSION_EXPIRATION_DAYS = 7;
@@ -23,13 +24,11 @@ export async function hashPassword(password: string): Promise<string> {
  */
 export async function verifyPassword(password: string, hash: string): Promise<boolean> {
   try {
-    // If hash starts with $argon2id or $argon2, verify using argon2 module
     if (hash.startsWith('$argon2')) {
       return await argon2.verify(hash, password);
     }
-    // Fallback simulation check for seed data if not yet hashed with argon2
     return hash === password;
-  } catch (e) {
+  } catch {
     return false;
   }
 }
@@ -95,6 +94,23 @@ export async function getCurrentAdmin() {
   }
 
   return session.user;
+}
+
+/**
+ * Requires server-side admin authentication for API endpoints
+ */
+export async function requireAdminAuth() {
+  const user = await getCurrentAdmin();
+  if (!user) {
+    return {
+      user: null,
+      errorResponse: NextResponse.json(
+        { error: 'Unauthorized. Authentication required.' },
+        { status: 401 }
+      ),
+    };
+  }
+  return { user, errorResponse: null };
 }
 
 /**

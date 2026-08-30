@@ -1,8 +1,8 @@
-'use client';
-
 import React from 'react';
 import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
+import { headers } from 'next/headers';
+import { redirect } from 'next/navigation';
+import { getCurrentAdmin } from '@/lib/auth';
 import {
   LayoutDashboard,
   Users,
@@ -17,25 +17,25 @@ import {
   ChevronRight,
 } from 'lucide-react';
 
-export default function AdminLayout({
+export default async function AdminLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const pathname = usePathname();
-  const router = useRouter();
+  const headerList = await headers();
+  const pathname = headerList.get('x-pathname') || '/admin/dashboard';
 
-  if (pathname === '/admin/login') {
+  // Allow unauthenticated rendering only for /admin/login and /admin/forgot-password
+  if (pathname === '/admin/login' || pathname === '/admin/forgot-password') {
     return <>{children}</>;
   }
 
-  const handleLogout = async () => {
-    try {
-      await fetch('/api/admin/logout', { method: 'POST' });
-    } catch {}
-    router.push('/admin/login');
-    router.refresh();
-  };
+  // Server-side database session verification (Rule #1, #6)
+  const currentAdmin = await getCurrentAdmin();
+
+  if (!currentAdmin) {
+    redirect(`/admin/login?redirect=${encodeURIComponent(pathname)}`);
+  }
 
   const navItems = [
     { href: '/admin/dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -107,12 +107,12 @@ export default function AdminLayout({
         {/* User Session Footer & Logout */}
         <div className="pt-6 border-t border-white/10 space-y-4">
           <div className="flex items-center gap-3 p-3 rounded-2xl bg-white/5 border border-white/5">
-            <div className="w-9 h-9 rounded-xl bg-indigo-500/20 text-indigo-400 border border-indigo-500/30 flex items-center justify-center font-black text-xs">
-              AV
+            <div className="w-9 h-9 rounded-xl bg-indigo-500/20 text-indigo-400 border border-indigo-500/30 flex items-center justify-center font-black text-xs uppercase">
+              {currentAdmin.name.substring(0, 2)}
             </div>
             <div className="truncate">
-              <div className="text-xs font-extrabold text-white truncate">Avetis (Super Admin)</div>
-              <div className="text-[10px] text-[#00dc93] font-mono truncate">hello@elab.am</div>
+              <div className="text-xs font-extrabold text-white truncate">{currentAdmin.name}</div>
+              <div className="text-[10px] text-[#00dc93] font-mono truncate">{currentAdmin.email}</div>
             </div>
           </div>
 
@@ -134,7 +134,7 @@ export default function AdminLayout({
         <header className="h-16 border-b border-white/10 bg-[#0d0e14] px-6 flex items-center justify-between">
           <div className="flex items-center gap-2 text-xs text-slate-400">
             <ShieldCheck className="w-4 h-4 text-[#00dc93]" />
-            <span className="font-mono text-slate-300">Protected Admin Session (Argon2id Hashed)</span>
+            <span className="font-mono text-slate-300">Server Verified Admin Session ({currentAdmin.role})</span>
           </div>
 
           <div className="flex items-center gap-4">
@@ -149,13 +149,15 @@ export default function AdminLayout({
               </button>
             </div>
 
-            <button
-              onClick={handleLogout}
-              className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-xs font-bold hover:bg-red-500/20 transition-colors"
-            >
-              <LogOut className="w-3.5 h-3.5" />
-              <span>Sign Out</span>
-            </button>
+            <form action="/api/admin/logout" method="POST">
+              <button
+                type="submit"
+                className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-xs font-bold hover:bg-red-500/20 transition-colors"
+              >
+                <LogOut className="w-3.5 h-3.5" />
+                <span>Sign Out</span>
+              </button>
+            </form>
           </div>
         </header>
 
