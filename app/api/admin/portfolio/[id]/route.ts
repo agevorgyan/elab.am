@@ -35,10 +35,29 @@ export async function PUT(
 
     return NextResponse.json({ success: true, project: updated });
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : 'Failed to update portfolio project.';
+    let status = 400;
+    let message = 'Failed to update portfolio project.';
+
+    if (error instanceof Error) {
+      message = error.message;
+      if (
+        message.includes('already exists') ||
+        message.includes('already uses') ||
+        message.includes('URL slug')
+      ) {
+        status = 409;
+        message = 'Another project already uses this URL slug.';
+      }
+    }
+
+    if (typeof error === 'object' && error !== null && 'code' in error && (error as Record<string, unknown>).code === 'P2002') {
+      status = 409;
+      message = 'Another project already uses this URL slug.';
+    }
+
     return NextResponse.json(
       { error: message },
-      { status: 400 }
+      { status }
     );
   }
 }

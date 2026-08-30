@@ -22,8 +22,23 @@ export interface DbPortfolioProject {
   published: boolean;
   sortOrder: number;
   gallery: { id?: string; url: string; alt?: string | null }[];
+  categories?: { id: string; slug: string; name: string }[];
   createdAt?: Date;
   updatedAt?: Date;
+}
+
+/**
+ * Deterministically normalizes a URL slug for English, Armenian, Russian text
+ */
+export function normalizeSlug(input?: string | null): string {
+  if (!input) return '';
+  return input
+    .toLowerCase()
+    .trim()
+    .replace(/['"’`]/g, '')
+    .replace(/[^a-z0-9\u0531-\u058f\u0400-\u04ff-]+/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^-+|-+$/g, '');
 }
 
 /**
@@ -38,6 +53,7 @@ export async function getPublishedPortfolioProjects(): Promise<DbPortfolioProjec
         images: {
           orderBy: { sortOrder: 'asc' },
         },
+        categories: true,
       },
     });
 
@@ -63,6 +79,7 @@ export async function getPublishedPortfolioProjects(): Promise<DbPortfolioProjec
       published: p.published,
       sortOrder: p.sortOrder,
       gallery: p.images.map((img) => ({ id: img.id, url: img.url, alt: img.alt })),
+      categories: p.categories.map((c) => ({ id: c.id, slug: c.slug, name: c.name })),
       createdAt: p.createdAt,
       updatedAt: p.updatedAt,
     }));
@@ -82,6 +99,7 @@ export async function getAllPortfolioProjectsAdmin(): Promise<DbPortfolioProject
         images: {
           orderBy: { sortOrder: 'asc' },
         },
+        categories: true,
       },
     });
 
@@ -107,6 +125,7 @@ export async function getAllPortfolioProjectsAdmin(): Promise<DbPortfolioProject
       published: p.published,
       sortOrder: p.sortOrder,
       gallery: p.images.map((img) => ({ id: img.id, url: img.url, alt: img.alt })),
+      categories: p.categories.map((c) => ({ id: c.id, slug: c.slug, name: c.name })),
       createdAt: p.createdAt,
       updatedAt: p.updatedAt,
     }));
@@ -126,6 +145,7 @@ export async function getPortfolioProjectBySlug(slug: string): Promise<DbPortfol
         images: {
           orderBy: { sortOrder: 'asc' },
         },
+        categories: true,
       },
     });
 
@@ -153,6 +173,7 @@ export async function getPortfolioProjectBySlug(slug: string): Promise<DbPortfol
       published: p.published,
       sortOrder: p.sortOrder,
       gallery: p.images.map((img) => ({ id: img.id, url: img.url, alt: img.alt })),
+      categories: p.categories.map((c) => ({ id: c.id, slug: c.slug, name: c.name })),
       createdAt: p.createdAt,
       updatedAt: p.updatedAt,
     };
@@ -165,17 +186,51 @@ export async function getPortfolioProjectBySlug(slug: string): Promise<DbPortfol
  * Creates a new portfolio project in PostgreSQL with unique slug validation
  */
 export async function createPortfolioProject(data: Partial<DbPortfolioProject>) {
-  if (!data.title || !data.slug || !data.client || !data.summary) {
-    throw new Error('Title, slug, client, and summary are required.');
+  if (!data.title || !data.title.trim()) {
+    throw new Error('Project title is required.');
+  }
+  if (!data.client || !data.client.trim()) {
+    throw new Error('Client name is required.');
+  }
+  if (!data.summary || !data.summary.trim()) {
+    throw new Error('Project summary is required.');
   }
 
-  const normalizedSlug = data.slug.toLowerCase().trim().replace(/[^a-z0-9-]/g, '-');
+  const rawSlug = data.slug || data.title;
+  const normalizedSlug = normalizeSlug(rawSlug);
 
-  const existing = await prisma.portfolioProject.findUnique({ where: { slug: normalizedSlug } });
+  if (!normalizedSlug) {
+    throw new Error('A valid title or URL slug is required.');
+  }
+
+  const existing = await prisma.portfolioProject.findFirst({
+    where: {
+      OR: [
+        { slug: normalizedSlug },
+        { slug: rawSlug.toLowerCase().trim() },
+      ],
+    },
+  });
+
   if (existing) {
-    throw new Error(`Portfolio project with slug '${normalizedSlug}' already exists.`);
+    const err = new Error(`Another project already uses the URL slug '${normalizedSlug}'.`);
+    (err as Error & { statusCode?: number }).statusCode = 409;
+    throw err;
   }
 
+  const categoryStr = typeof data.category === 'string' ? data.category.trim() : 'corporate';
+  const categoryRecord = await prisma.portfolioCategory.findFirst({
+    where: {
+      OR: [
+        { slug: categoryStr },
+        { id: categoryStr },
+        { name: categoryStr },
+      ],
+    },
+  });
+
+  const categoryVal = categoryStr || 'corporate';
+  const categoryLabelVal = data.categoryLabel || categoryRecord?.name || categoryVal;
   const galleryList = data.gallery || [];
 
   return await prisma.portfolioProject.create({
@@ -183,8 +238,8 @@ export async function createPortfolioProject(data: Partial<DbPortfolioProject>) 
       title: data.title.trim(),
       slug: normalizedSlug,
       client: data.client.trim(),
-      category: data.category || 'corporate',
-      categoryLabel: data.categoryLabel || data.category || 'Corporate',
+      category: categoryVal,
+      categoryLabel: categoryLabelVal,
       summary: data.summary.trim(),
       overview: data.overview || data.summary.trim(),
       challenge: data.challenge || data.summary.trim(),
@@ -199,6 +254,11 @@ export async function createPortfolioProject(data: Partial<DbPortfolioProject>) 
       featured: data.featured ?? false,
       published: data.published ?? true,
       sortOrder: data.sortOrder ?? 0,
+      ...(categoryRecord && {
+        categories: {
+          connect: [{ id: categoryRecord.id }],
+        },
+      }),
       images: {
         create: galleryList.map((g, idx) => ({
           url: typeof g === 'string' ? g : g.url,
@@ -207,7 +267,7 @@ export async function createPortfolioProject(data: Partial<DbPortfolioProject>) 
         })),
       },
     },
-    include: { images: true },
+    include: { images: true, categories: true },
   });
 }
 
@@ -220,13 +280,38 @@ export async function updatePortfolioProject(id: string, data: Partial<DbPortfol
     throw new Error('Portfolio project not found.');
   }
 
-  if (data.slug && data.slug !== existing.slug) {
-    const normalizedSlug = data.slug.toLowerCase().trim().replace(/[^a-z0-9-]/g, '-');
-    const slugCheck = await prisma.portfolioProject.findUnique({ where: { slug: normalizedSlug } });
+  if (data.slug) {
+    const normalizedSlug = normalizeSlug(data.slug);
+    if (!normalizedSlug) {
+      throw new Error('A valid URL slug is required.');
+    }
+
+    const slugCheck = await prisma.portfolioProject.findFirst({
+      where: {
+        slug: normalizedSlug,
+        NOT: { id },
+      },
+    });
+
     if (slugCheck) {
-      throw new Error(`Portfolio project with slug '${normalizedSlug}' already exists.`);
+      const err = new Error(`Another project already uses the URL slug '${normalizedSlug}'.`);
+      (err as Error & { statusCode?: number }).statusCode = 409;
+      throw err;
     }
     data.slug = normalizedSlug;
+  }
+
+  let categoryRecord = null;
+  if (typeof data.category === 'string' && data.category.trim()) {
+    categoryRecord = await prisma.portfolioCategory.findFirst({
+      where: {
+        OR: [
+          { slug: data.category.trim() },
+          { id: data.category.trim() },
+          { name: data.category.trim() },
+        ],
+      },
+    });
   }
 
   if (data.gallery) {
@@ -239,8 +324,8 @@ export async function updatePortfolioProject(id: string, data: Partial<DbPortfol
       ...(data.title && { title: data.title.trim() }),
       ...(data.slug && { slug: data.slug }),
       ...(data.client && { client: data.client.trim() }),
-      ...(data.category && { category: data.category }),
-      ...(data.categoryLabel && { categoryLabel: data.categoryLabel }),
+      ...(typeof data.category === 'string' && { category: data.category.trim() }),
+      ...(data.categoryLabel && { categoryLabel: data.categoryLabel.trim() }),
       ...(data.summary && { summary: data.summary.trim() }),
       ...(data.overview !== undefined && { overview: data.overview }),
       ...(data.challenge !== undefined && { challenge: data.challenge }),
@@ -255,6 +340,11 @@ export async function updatePortfolioProject(id: string, data: Partial<DbPortfol
       ...(data.featured !== undefined && { featured: data.featured }),
       ...(data.published !== undefined && { published: data.published }),
       ...(data.sortOrder !== undefined && { sortOrder: data.sortOrder }),
+      ...(categoryRecord && {
+        categories: {
+          set: [{ id: categoryRecord.id }],
+        },
+      }),
       ...(data.gallery && {
         images: {
           create: data.gallery.map((g, idx) => ({
@@ -265,7 +355,7 @@ export async function updatePortfolioProject(id: string, data: Partial<DbPortfol
         },
       }),
     },
-    include: { images: true },
+    include: { images: true, categories: true },
   });
 }
 
@@ -275,7 +365,7 @@ export async function updatePortfolioProject(id: string, data: Partial<DbPortfol
 export async function duplicatePortfolioProject(id: string) {
   const source = await prisma.portfolioProject.findUnique({
     where: { id },
-    include: { images: true },
+    include: { images: true, categories: true },
   });
 
   if (!source) throw new Error('Source project not found.');
@@ -304,6 +394,9 @@ export async function duplicatePortfolioProject(id: string) {
       featured: false,
       published: false,
       sortOrder: source.sortOrder + 1,
+      categories: {
+        connect: source.categories.map((c) => ({ id: c.id })),
+      },
       images: {
         create: source.images.map((img, idx) => ({
           url: img.url,
@@ -312,7 +405,7 @@ export async function duplicatePortfolioProject(id: string) {
         })),
       },
     },
-    include: { images: true },
+    include: { images: true, categories: true },
   });
 }
 
