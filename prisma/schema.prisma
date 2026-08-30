@@ -79,13 +79,16 @@ model SiteSettings {
 // 4. PortfolioCategory Model
 // ------------------------------------------------------
 model PortfolioCategory {
-  id        String             @id @default(cuid())
-  slug      String             @unique
-  name      String
-  sortOrder Int                @default(0)
-  projects  PortfolioProject[]
+  id          String             @id @default(cuid())
+  slug        String             @unique
+  name        String
+  description String?
+  sortOrder   Int                @default(0)
+  active      Boolean            @default(true)
+  projects    PortfolioProject[]
 
   @@index([slug])
+  @@index([active])
 }
 
 // ------------------------------------------------------
@@ -96,9 +99,12 @@ model PortfolioTechnology {
   slug     String             @unique
   name     String
   icon     String?
+  url      String?
+  active   Boolean            @default(true)
   projects PortfolioProject[]
 
   @@index([slug])
+  @@index([active])
 }
 
 // ------------------------------------------------------
@@ -204,6 +210,8 @@ model Media {
   url       String
   mimeType  String
   sizeBytes Int
+  width     Int?
+  height    Int?
   alt       String?
   createdAt DateTime @default(now())
 

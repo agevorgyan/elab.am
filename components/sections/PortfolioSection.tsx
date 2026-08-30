@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Language, TRANSLATIONS } from '@/lib/translations';
 import { DbPortfolioProject } from '@/lib/portfolio-db';
+import { DbPortfolioCategory } from '@/lib/portfolio-categories';
 import { PORTFOLIO_PROJECTS } from '@/lib/portfolio-data';
 import { ExternalLink, X, ArrowUpRight, Layers, Sparkles } from 'lucide-react';
 
@@ -15,6 +16,7 @@ export const PortfolioSection: React.FC<PortfolioSectionProps> = ({ lang }) => {
   const t = TRANSLATIONS[lang].portfolio;
   const [activeCategory, setActiveCategory] = useState<string>('all');
   const [dbProjects, setDbProjects] = useState<DbPortfolioProject[]>([]);
+  const [dbCategories, setDbCategories] = useState<DbPortfolioCategory[]>([]);
   const [selectedProject, setSelectedProject] = useState<DbPortfolioProject | null>(null);
 
   useEffect(() => {
@@ -26,15 +28,16 @@ export const PortfolioSection: React.FC<PortfolioSectionProps> = ({ lang }) => {
         }
       })
       .catch(() => {});
-  }, []);
 
-  const categories = [
-    { id: 'all', label: t.all },
-    { id: 'corporate', label: t.corporate },
-    { id: 'ecommerce', label: t.ecommerce },
-    { id: 'landing-page', label: t.landingPage },
-    { id: 'business-card', label: t.businessCard },
-  ];
+    fetch('/api/portfolio/categories')
+      .then((res) => res.json())
+      .then((data) => {
+        if (Array.isArray(data.categories) && data.categories.length > 0) {
+          setDbCategories(data.categories);
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   // Map dbProjects or fallback to initial PORTFOLIO_PROJECTS
   const allList: DbPortfolioProject[] = dbProjects.length > 0
@@ -61,6 +64,17 @@ export const PortfolioSection: React.FC<PortfolioSectionProps> = ({ lang }) => {
         gallery: p.gallery ? p.gallery.map((url) => ({ url })) : [],
       }));
 
+  // Categories list from database or default
+  const categoriesList = dbCategories.length > 0
+    ? dbCategories.map((c) => ({ id: c.slug, label: c.name }))
+    : [
+        { id: 'all', label: t.all },
+        { id: 'corporate', label: t.corporate },
+        { id: 'ecommerce', label: t.ecommerce },
+        { id: 'landing-page', label: t.landingPage },
+        { id: 'business-card', label: t.businessCard },
+      ];
+
   const filteredProjects = activeCategory === 'all'
     ? allList
     : allList.filter((p) => p.category === activeCategory);
@@ -86,9 +100,9 @@ export const PortfolioSection: React.FC<PortfolioSectionProps> = ({ lang }) => {
           </p>
         </div>
 
-        {/* Category Filter Tabs */}
+        {/* Dynamic Database Category Filter Tabs */}
         <div className="flex flex-wrap items-center justify-center gap-2 mb-12">
-          {categories.map((cat) => (
+          {categoriesList.map((cat) => (
             <button
               key={cat.id}
               onClick={() => setActiveCategory(cat.id)}

@@ -5,7 +5,7 @@ import { PORTFOLIO_PROJECTS } from '../lib/portfolio-data';
 const prisma = new PrismaClient();
 
 async function main() {
-  console.log('🌱 Seeding eLab.am production database, portfolio projects & Argon2id SUPER_ADMIN...');
+  console.log('🌱 Seeding eLab.am production database, technologies, portfolio categories, projects & Argon2id SUPER_ADMIN...');
 
   const adminEmail = process.env.ADMIN_EMAIL || process.env.INITIAL_ADMIN_EMAIL || 'admin@elab.am';
   const rawPassword = process.env.ADMIN_PASSWORD || process.env.INITIAL_ADMIN_PASSWORD || 'SuperAdmin2026!';
@@ -90,7 +90,54 @@ async function main() {
   }
   console.log('✅ Site settings seeded.');
 
-  // 4. Seed Services CMS Content
+  // 4. Seed Reusable Technologies
+  const techStack = [
+    { slug: 'nextjs', name: 'Next.js', icon: 'Code', url: 'https://nextjs.org' },
+    { slug: 'react', name: 'React', icon: 'Code', url: 'https://react.dev' },
+    { slug: 'typescript', name: 'TypeScript', icon: 'Code', url: 'https://www.typescriptlang.org' },
+    { slug: 'tailwind-css', name: 'Tailwind CSS', icon: 'Layers', url: 'https://tailwindcss.com' },
+    { slug: 'wordpress', name: 'WordPress', icon: 'Globe', url: 'https://wordpress.org' },
+    { slug: 'woocommerce', name: 'WooCommerce', icon: 'ShoppingBag', url: 'https://woocommerce.com' },
+    { slug: 'php', name: 'PHP', icon: 'Code', url: 'https://www.php.net' },
+    { slug: 'javascript', name: 'JavaScript', icon: 'Code', url: 'https://developer.mozilla.org' },
+    { slug: 'nodejs', name: 'Node.js', icon: 'Cpu', url: 'https://nodejs.org' },
+    { slug: 'postgresql', name: 'PostgreSQL', icon: 'Database', url: 'https://www.postgresql.org' },
+    { slug: '1c-erp', name: '1C ERP Integration', icon: 'Cpu', url: 'https://1c.ru' },
+    { slug: 'arca-gateway', name: 'ArCa Gateway', icon: 'CreditCard', url: 'https://arca.am' },
+    { slug: 'idram-payment', name: 'Idram Payment', icon: 'CreditCard', url: 'https://idram.am' },
+    { slug: 'redis', name: 'Redis', icon: 'Zap', url: 'https://redis.io' },
+    { slug: 'framer-motion', name: 'Framer Motion', icon: 'Sparkles', url: 'https://framer.com/motion' },
+  ];
+
+  for (const t of techStack) {
+    await prisma.portfolioTechnology.upsert({
+      where: { slug: t.slug },
+      update: { name: t.name, icon: t.icon, url: t.url, active: true },
+      create: { slug: t.slug, name: t.name, icon: t.icon, url: t.url, active: true },
+    });
+  }
+  console.log('✅ Reusable technologies seeded into PostgreSQL.');
+
+  // 5. Seed Portfolio Categories
+  const defaultCategories = [
+    { slug: 'all', name: 'All Projects', description: 'Complete collection of eLab digital case studies', sortOrder: 1, active: true },
+    { slug: 'corporate', name: 'Corporate Websites', description: 'Enterprise corporate portals and brand identity showcases', sortOrder: 2, active: true },
+    { slug: 'ecommerce', name: 'E-Commerce & Retail', description: 'Online stores with local ArCa / Idram payment gateways', sortOrder: 3, active: true },
+    { slug: 'landing-page', name: 'Landing Pages', description: 'High-conversion single page sites engineered for campaigns', sortOrder: 4, active: true },
+    { slug: 'business-card', name: 'Business Card Websites', description: 'Compact digital presence for independent professionals', sortOrder: 5, active: true },
+    { slug: 'custom', name: 'Custom Web Applications', description: 'Bespoke web applications, APIs, and complex web tools', sortOrder: 6, active: true },
+  ];
+
+  for (const cat of defaultCategories) {
+    await prisma.portfolioCategory.upsert({
+      where: { slug: cat.slug },
+      update: cat,
+      create: cat,
+    });
+  }
+  console.log('✅ Portfolio categories seeded into PostgreSQL.');
+
+  // 6. Seed Services CMS Content
   const servicesData = [
     {
       slug: 'landing-page',
@@ -211,7 +258,7 @@ async function main() {
   }
   console.log('✅ Services CMS content seeded.');
 
-  // 5. Seed Existing Portfolio Projects into PostgreSQL
+  // 7. Seed Existing Portfolio Projects into PostgreSQL
   for (const p of PORTFOLIO_PROJECTS) {
     const existingProject = await prisma.portfolioProject.findUnique({ where: { slug: p.slug } });
 
@@ -268,7 +315,7 @@ async function main() {
   }
   console.log('✅ 6 Portfolio projects seeded into PostgreSQL.');
 
-  // 6. Seed Sample Lead & Note
+  // 8. Seed Sample Lead & Note
   await prisma.lead.upsert({
     where: { id: 'lead-101' },
     update: {},
