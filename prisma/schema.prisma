@@ -172,6 +172,7 @@ model Lead {
   projectType String
   budget      String
   message     String
+  source      String     @default("Website Form")
   status      LeadStatus @default(NEW)
   assignedTo  String?
   createdAt   DateTime   @default(now())

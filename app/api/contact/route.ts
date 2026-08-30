@@ -1,17 +1,16 @@
 import { NextResponse } from 'next/server';
+import { createLeadPublic } from '@/lib/leads-db';
 
 export async function POST(request: Request) {
   try {
     const body = await request.json();
     const { name, company, phone, email, projectType, budget, message, honeypot } = body;
 
-    // Rule #24: Spam Protection Honeypot
+    // Spam Protection Honeypot
     if (honeypot && honeypot.length > 0) {
-      // Quietly reject bot submissions
       return NextResponse.json({ success: true, message: 'Inquiry received.' });
     }
 
-    // Rule #21 & #22: Input Validation
     if (!name || typeof name !== 'string' || name.trim().length === 0) {
       return NextResponse.json(
         { success: false, message: 'Name is required.' },
@@ -26,45 +25,42 @@ export async function POST(request: Request) {
       );
     }
 
-    // Rule #23: Form Destination Configuration via Environment Variables
-    const webhookUrl = process.env.CONTACT_WEBHOOK_URL;
-    const notificationEmail = process.env.CONTACT_EMAIL || 'info@elab.am';
-
-    const leadPayload = {
-      timestamp: new Date().toISOString(),
+    // Save lead into PostgreSQL
+    const lead = await createLeadPublic({
       name: name.trim(),
-      company: (company || 'N/A').trim(),
+      company: (company || '').trim(),
       phone: phone.trim(),
-      email: (email || 'N/A').trim(),
-      projectType,
-      budget,
-      message: (message || 'N/A').trim(),
-      destinationEmail: notificationEmail,
-    };
+      email: (email || 'info@elab.am').trim(),
+      projectType: projectType || 'custom',
+      budget: budget || 'Unspecified',
+      message: (message || 'No message content').trim(),
+      source: 'Website Contact Form',
+    });
 
+    // Webhook dispatch if configured
+    const webhookUrl = process.env.CONTACT_WEBHOOK_URL;
     if (webhookUrl) {
       try {
         await fetch(webhookUrl, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(leadPayload),
+          body: JSON.stringify(lead),
         });
       } catch (webhookErr) {
         console.warn('Webhook dispatch failed:', webhookErr);
       }
     }
 
-    console.log('[eLab Lead Submitted Successfully]:', leadPayload);
-
     return NextResponse.json({
       success: true,
       message: 'Inquiry received successfully.',
+      leadId: lead.id,
       timestamp: new Date().toISOString(),
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error processing contact submission:', error);
     return NextResponse.json(
-      { success: false, message: 'Internal server error processing request.' },
+      { success: false, message: error.message || 'Internal server error processing request.' },
       { status: 500 }
     );
   }

@@ -5,7 +5,7 @@ import { PORTFOLIO_PROJECTS } from '../lib/portfolio-data';
 const prisma = new PrismaClient();
 
 async function main() {
-  console.log('🌱 Seeding eLab.am production database, technologies, portfolio categories, projects & Argon2id SUPER_ADMIN...');
+  console.log('🌱 Seeding eLab.am production database, CRM leads, technologies, portfolio categories, projects & Argon2id SUPER_ADMIN...');
 
   const adminEmail = process.env.ADMIN_EMAIL || process.env.INITIAL_ADMIN_EMAIL || 'admin@elab.am';
   const rawPassword = process.env.ADMIN_PASSWORD || process.env.INITIAL_ADMIN_PASSWORD || 'SuperAdmin2026!';
@@ -315,11 +315,9 @@ async function main() {
   }
   console.log('✅ 6 Portfolio projects seeded into PostgreSQL.');
 
-  // 8. Seed Sample Lead & Note
-  await prisma.lead.upsert({
-    where: { id: 'lead-101' },
-    update: {},
-    create: {
+  // 8. Seed Real CRM Leads into PostgreSQL
+  const sampleLeads = [
+    {
       id: 'lead-101',
       name: 'Arman Petrosyan',
       company: 'Ararat Beverages LLC',
@@ -328,16 +326,83 @@ async function main() {
       projectType: 'online-store',
       budget: '350,000–500,000 AMD',
       message: 'We want to launch an online e-commerce store with ArCa payment gateway integration.',
+      source: 'Website Contact Form',
       status: LeadStatus.NEW,
       assignedTo: admin.name,
-      notes: {
-        create: [
-          { text: 'Initial lead submitted via website contact form.', authorId: admin.id },
-        ],
-      },
+      notes: ['Initial lead submitted via website contact form.'],
     },
-  });
-  console.log('✅ Sample lead seeded.');
+    {
+      id: 'lead-102',
+      name: 'Gagik Harutyunyan',
+      company: 'Yerevan Logistics CJSC',
+      phone: '+374 93 44 55 66',
+      email: 'gagik@yerevanlogistics.am',
+      projectType: 'corporate-website',
+      budget: '500,000–800,000 AMD',
+      message: 'Corporate web portal required for international freight forwarding services.',
+      source: 'Direct Phone Inquiry',
+      status: LeadStatus.CONTACTED,
+      assignedTo: admin.name,
+      notes: ['Contacted client via phone call on Aug 28. Requested technical requirements.'],
+    },
+    {
+      id: 'lead-103',
+      name: 'Marine Sargsyan',
+      company: 'Silk Road Gems',
+      phone: '+374 98 77 88 99',
+      email: 'marine@silkroadgems.com',
+      projectType: 'online-store',
+      budget: '600,000+ AMD',
+      message: 'Luxury jewelry e-commerce store targeting European and US customers with multi-currency checkout.',
+      source: 'WhatsApp Referral',
+      status: LeadStatus.QUALIFIED,
+      assignedTo: admin.name,
+      notes: ['Qualified lead. High budget, clear scope and timelines.'],
+    },
+    {
+      id: 'lead-104',
+      name: 'David Hovhannisyan',
+      company: 'Ani Hotel Yerevan',
+      phone: '+374 10 58 12 34',
+      email: 'd.hovhannisyan@anihotel.am',
+      projectType: 'corporate-website',
+      budget: '1,000,000+ AMD',
+      message: 'Complete website redesign with online room booking engine & virtual tour integration.',
+      source: 'LinkedIn Direct',
+      status: LeadStatus.PROPOSAL_SENT,
+      assignedTo: admin.name,
+      notes: ['Commercial proposal sent on Aug 29. Awaiting executive board review.'],
+    },
+    {
+      id: 'lead-105',
+      name: 'Lilit Grigoryan',
+      company: 'Armenia Tech Hub',
+      phone: '+374 77 11 22 33',
+      email: 'lilit@armeniatech.am',
+      projectType: 'landing-page',
+      budget: '200,000 AMD',
+      message: 'High-conversion landing page for upcoming Tech Summit 2026 in Yerevan.',
+      source: 'Website Contact Form',
+      status: LeadStatus.WON,
+      assignedTo: admin.name,
+      notes: ['Contract signed and deposit received. Project kick-off scheduled.'],
+    },
+  ];
+
+  for (const l of sampleLeads) {
+    const { notes, ...leadFields } = l;
+    await prisma.lead.upsert({
+      where: { id: l.id },
+      update: leadFields,
+      create: {
+        ...leadFields,
+        notes: {
+          create: notes.map((text) => ({ text, authorId: admin.id })),
+        },
+      },
+    });
+  }
+  console.log('✅ 5 Real CRM sample leads seeded.');
 
   console.log('🎉 Full Argon2id database seeding complete!');
 }

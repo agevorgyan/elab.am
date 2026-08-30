@@ -1,90 +1,236 @@
 'use client';
 
-import React, { useState } from 'react';
-import { INITIAL_LEADS, Lead } from '@/lib/admin-store';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Users,
   Search,
-  Filter,
   Download,
-  Plus,
-  MessageSquare,
   Phone,
   Mail,
-  Calendar,
-  User,
-  CheckCircle2,
-  XCircle,
-  Clock,
   Send,
-  Sparkles,
+  Trash2,
+  User,
+  ChevronLeft,
+  ChevronRight,
+  RefreshCw,
+  AlertCircle,
+  Check,
+  Filter,
 } from 'lucide-react';
 
+interface LeadNote {
+  id: string;
+  text: string;
+  createdAt: string;
+  author?: {
+    id: string;
+    name: string;
+    email: string;
+  } | null;
+}
+
+interface LeadItem {
+  id: string;
+  name: string;
+  company?: string | null;
+  phone: string;
+  email: string;
+  projectType: string;
+  budget: string;
+  message: string;
+  source: string;
+  status: 'NEW' | 'CONTACTED' | 'QUALIFIED' | 'PROPOSAL_SENT' | 'WON' | 'LOST';
+  assignedTo?: string | null;
+  createdAt: string;
+  updatedAt: string;
+  notes?: LeadNote[];
+}
+
 export default function AdminLeadsPage() {
-  const [leads, setLeads] = useState<Lead[]>(INITIAL_LEADS);
-  const [selectedLead, setSelectedLead] = useState<Lead | null>(leads[0]);
+  const [leads, setLeads] = useState<LeadItem[]>([]);
+  const [selectedLead, setSelectedLead] = useState<LeadItem | null>(null);
+  const [loading, setLoading] = useState(true);
+  
+  // Search, Filter & Pagination
   const [searchTerm, setSearchTerm] = useState<string>('');
-  const [statusFilter, setStatusFilter] = useState<string>('All');
+  const [statusFilter, setStatusFilter] = useState<string>('ALL');
+  const [sortBy, setSortBy] = useState<string>('createdAt');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalItems, setTotalItems] = useState(0);
+
+  // Form states
   const [newNoteText, setNewNoteText] = useState<string>('');
+  const [assignName, setAssignName] = useState<string>('');
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [successMsg, setSuccessMsg] = useState<string | null>(null);
 
-  const statuses = ['All', 'New', 'Contacted', 'Qualified', 'Proposal Sent', 'Won', 'Lost'];
+  const statuses = [
+    { key: 'ALL', label: 'All' },
+    { key: 'NEW', label: 'New' },
+    { key: 'CONTACTED', label: 'Contacted' },
+    { key: 'QUALIFIED', label: 'Qualified' },
+    { key: 'PROPOSAL_SENT', label: 'Proposal Sent' },
+    { key: 'WON', label: 'Won' },
+    { key: 'LOST', label: 'Lost' },
+  ];
 
-  const filteredLeads = leads.filter((lead) => {
-    const matchesSearch =
-      lead.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      lead.company.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      lead.phone.includes(searchTerm) ||
-      lead.email.toLowerCase().includes(searchTerm.toLowerCase());
+  const fetchLeads = useCallback(async () => {
+    setLoading(true);
+    setErrorMsg(null);
+    try {
+      const params = new URLSearchParams({
+        page: String(page),
+        limit: '10',
+        search: searchTerm,
+        status: statusFilter,
+        sortBy,
+        sortOrder,
+      });
 
-    const matchesStatus = statusFilter === 'All' || lead.status === statusFilter;
+      const res = await fetch(`/api/admin/leads?${params.toString()}`);
+      const data = await res.json();
 
-    return matchesSearch && matchesStatus;
-  });
+      if (res.ok && Array.isArray(data.leads)) {
+        setLeads(data.leads);
+        setTotalPages(data.totalPages || 1);
+        setTotalItems(data.total || 0);
 
-  const handleStatusChange = (leadId: string, newStatus: Lead['status']) => {
-    setLeads((prev) =>
-      prev.map((l) => (l.id === leadId ? { ...l, status: newStatus } : l))
-    );
-    if (selectedLead && selectedLead.id === leadId) {
-      setSelectedLead((prev) => (prev ? { ...prev, status: newStatus } : null));
+        if (selectedLead) {
+          const fresh = data.leads.find((l: LeadItem) => l.id === selectedLead.id);
+          if (fresh) {
+            setSelectedLead(fresh);
+            setAssignName(fresh.assignedTo || '');
+          }
+        } else if (data.leads.length > 0) {
+          setSelectedLead(data.leads[0]);
+          setAssignName(data.leads[0].assignedTo || '');
+        }
+      } else {
+        setErrorMsg(data.error || 'Failed to fetch CRM leads.');
+      }
+    } catch {
+      setErrorMsg('Failed to connect to CRM API.');
+    } finally {
+      setLoading(false);
+    }
+  }, [page, searchTerm, statusFilter, sortBy, sortOrder]);
+
+  useEffect(() => {
+    fetchLeads();
+  }, [fetchLeads]);
+
+  const handleStatusChange = async (leadId: string, newStatus: LeadItem['status']) => {
+    setErrorMsg(null);
+    try {
+      const res = await fetch(`/api/admin/leads/${leadId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: newStatus }),
+      });
+
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setSuccessMsg(`Status updated to '${newStatus}'`);
+        fetchLeads();
+      } else {
+        setErrorMsg(data.error || 'Failed to update status.');
+      }
+    } catch {
+      setErrorMsg('Error updating status.');
     }
   };
 
-  const handleAddNote = (e: React.FormEvent) => {
+  const handleAssignLead = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedLead) return;
+
+    try {
+      const res = await fetch(`/api/admin/leads/${selectedLead.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ assignedTo: assignName }),
+      });
+
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setSuccessMsg(`Lead assigned to '${assignName || 'Unassigned'}'`);
+        fetchLeads();
+      } else {
+        setErrorMsg(data.error || 'Failed to assign lead.');
+      }
+    } catch {
+      setErrorMsg('Error assigning lead.');
+    }
+  };
+
+  const handleAddNote = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedLead || !newNoteText.trim()) return;
 
-    const newNote = {
-      id: `note-${Date.now()}`,
-      text: newNoteText.trim(),
-      date: new Date().toISOString().replace('T', ' ').substring(0, 16),
-      author: 'Avetis',
-    };
+    try {
+      const res = await fetch(`/api/admin/leads/${selectedLead.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ note: newNoteText.trim() }),
+      });
 
-    const updatedLead = {
-      ...selectedLead,
-      notes: [...(selectedLead.notes || []), newNote],
-    };
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setNewNoteText('');
+        setSuccessMsg('Note added successfully.');
+        fetchLeads();
+      } else {
+        setErrorMsg(data.error || 'Failed to add note.');
+      }
+    } catch {
+      setErrorMsg('Error adding note.');
+    }
+  };
 
-    setLeads((prev) => prev.map((l) => (l.id === selectedLead.id ? updatedLead : l)));
-    setSelectedLead(updatedLead);
-    setNewNoteText('');
+  const handleDeleteLead = async (id: string, name: string) => {
+    if (!confirm(`Are you sure you want to delete lead '${name}'? This action cannot be undone.`)) return;
+
+    try {
+      const res = await fetch(`/api/admin/leads/${id}`, {
+        method: 'DELETE',
+      });
+
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setSuccessMsg(`Deleted lead '${name}' cleanly.`);
+        setSelectedLead(null);
+        fetchLeads();
+      } else {
+        setErrorMsg(data.error || 'Failed to delete lead.');
+      }
+    } catch {
+      setErrorMsg('Error deleting lead.');
+    }
   };
 
   const handleExportCSV = () => {
-    const headers = ['ID,Name,Company,Phone,Email,ProjectType,Budget,Status,CreatedAt'];
-    const rows = leads.map(
-      (l) =>
-        `"${l.id}","${l.name}","${l.company}","${l.phone}","${l.email}","${l.projectType}","${l.budget}","${l.status}","${l.createdAt}"`
-    );
-    const csvContent = 'data:text/csv;charset=utf-8,' + [headers, ...rows].join('\n');
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement('a');
-    link.setAttribute('href', encodedUri);
-    link.setAttribute('download', `elab_leads_${new Date().toISOString().substring(0, 10)}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    window.open('/api/admin/leads/export', '_blank');
+  };
+
+  const getStatusBadge = (status: LeadItem['status']) => {
+    switch (status) {
+      case 'NEW':
+        return 'bg-[#00dc93]/20 text-[#00dc93]';
+      case 'CONTACTED':
+        return 'bg-amber-500/20 text-amber-400';
+      case 'QUALIFIED':
+        return 'bg-blue-500/20 text-blue-400';
+      case 'PROPOSAL_SENT':
+        return 'bg-purple-500/20 text-purple-400';
+      case 'WON':
+        return 'bg-emerald-500/20 text-emerald-400';
+      case 'LOST':
+        return 'bg-red-500/20 text-red-400';
+      default:
+        return 'bg-slate-500/20 text-slate-400';
+    }
   };
 
   return (
@@ -94,21 +240,36 @@ export default function AdminLeadsPage() {
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
-            Leads & Mini CRM<span className="text-[#00dc93]">.</span>
+            Leads &amp; Mini CRM<span className="text-[#00dc93]">.</span>
           </h1>
           <p className="text-xs text-slate-400 mt-1">
-            Manage incoming project inquiries, pipeline stages, and internal client communications.
+            Manage incoming project inquiries, pipeline stages, client assignments, and internal communications.
           </p>
         </div>
 
         <button
           onClick={handleExportCSV}
-          className="px-4 py-2.5 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 text-white font-bold text-xs flex items-center gap-2 transition-colors"
+          className="px-4 py-2.5 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 text-white font-bold text-xs flex items-center gap-2 transition-colors shadow-lg"
         >
           <Download className="w-4 h-4 text-[#00dc93]" />
           <span>Export CSV</span>
         </button>
       </div>
+
+      {/* Notifications */}
+      {errorMsg && (
+        <div className="p-4 rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 text-xs flex items-center gap-2">
+          <AlertCircle className="w-4 h-4 shrink-0" />
+          <span>{errorMsg}</span>
+        </div>
+      )}
+
+      {successMsg && (
+        <div className="p-4 rounded-xl bg-[#00dc93]/10 border border-[#00dc93]/30 text-[#00dc93] text-xs flex items-center gap-2">
+          <Check className="w-4 h-4 shrink-0" />
+          <span>{successMsg}</span>
+        </div>
+      )}
 
       {/* Filter & Search Bar */}
       <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4 p-4 rounded-2xl bg-[#141722] border border-white/10">
@@ -119,7 +280,10 @@ export default function AdminLeadsPage() {
           <input
             type="text"
             value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            onChange={(e) => {
+              setSearchTerm(e.target.value);
+              setPage(1);
+            }}
             placeholder="Search by name, company, phone, or email..."
             className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-[#0b0c10] border border-white/10 text-white text-xs focus:outline-none focus:border-[#00dc93]"
           />
@@ -129,15 +293,18 @@ export default function AdminLeadsPage() {
         <div className="flex items-center gap-1.5 overflow-x-auto pb-1 md:pb-0">
           {statuses.map((st) => (
             <button
-              key={st}
-              onClick={() => setStatusFilter(st)}
+              key={st.key}
+              onClick={() => {
+                setStatusFilter(st.key);
+                setPage(1);
+              }}
               className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all shrink-0 ${
-                statusFilter === st
-                  ? 'bg-[#00dc93] text-black'
+                statusFilter === st.key
+                  ? 'bg-[#00dc93] text-black shadow-md'
                   : 'bg-[#0b0c10] text-slate-400 hover:text-white border border-white/5'
               }`}
             >
-              {st}
+              {st.label}
             </button>
           ))}
         </div>
@@ -150,51 +317,90 @@ export default function AdminLeadsPage() {
         {/* Left Column: Leads Table */}
         <div className="lg:col-span-7 p-6 rounded-3xl bg-[#141722] border border-white/10 space-y-4">
           <div className="flex items-center justify-between">
-            <h2 className="text-base font-extrabold text-white">Inquiries ({filteredLeads.length})</h2>
-            <span className="text-xs font-mono text-[#00dc93]">Live Pipeline</span>
+            <h2 className="text-base font-extrabold text-white">Inquiries ({totalItems})</h2>
+            <span className="text-xs font-mono text-[#00dc93]">PostgreSQL Pipeline</span>
           </div>
 
-          <div className="space-y-3">
-            {filteredLeads.map((lead) => {
-              const isSelected = selectedLead?.id === lead.id;
+          {loading ? (
+            <div className="text-center py-16 text-xs text-slate-500 flex items-center justify-center gap-2">
+              <RefreshCw className="w-4 h-4 animate-spin text-[#00dc93]" />
+              <span>Loading CRM leads from database...</span>
+            </div>
+          ) : leads.length === 0 ? (
+            <div className="text-center py-16 text-xs text-slate-400 space-y-2">
+              <Users className="w-8 h-8 text-slate-600 mx-auto" />
+              <p>No leads found in database matching query.</p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {leads.map((lead) => {
+                const isSelected = selectedLead?.id === lead.id;
 
-              return (
-                <div
-                  key={lead.id}
-                  onClick={() => setSelectedLead(lead)}
-                  className={`p-4 rounded-2xl border transition-all cursor-pointer space-y-2 ${
-                    isSelected
-                      ? 'bg-[#181b26] border-[#00dc93] shadow-lg shadow-[#00dc93]/10'
-                      : 'bg-[#0b0c10] border-white/5 hover:border-white/20'
-                  }`}
+                return (
+                  <div
+                    key={lead.id}
+                    onClick={() => {
+                      setSelectedLead(lead);
+                      setAssignName(lead.assignedTo || '');
+                    }}
+                    className={`p-4 rounded-2xl border transition-all cursor-pointer space-y-2 ${
+                      isSelected
+                        ? 'bg-[#181b26] border-[#00dc93] shadow-lg shadow-[#00dc93]/10'
+                        : 'bg-[#0b0c10] border-white/5 hover:border-white/20'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="font-extrabold text-white text-sm">{lead.name}</span>
+                      <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold ${getStatusBadge(lead.status)}`}>
+                        {lead.status.replace('_', ' ')}
+                      </span>
+                    </div>
+
+                    <div className="flex items-center justify-between text-xs text-slate-400">
+                      <span>{lead.company || 'Private Inquiry'}</span>
+                      <span className="font-mono text-[#00dc93] font-bold">{lead.budget}</span>
+                    </div>
+
+                    <div className="text-[11px] text-slate-500 line-clamp-1">
+                      {lead.message}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          {/* Pagination Controls */}
+          {totalPages > 1 && (
+            <div className="flex items-center justify-between pt-4 border-t border-white/10 text-xs">
+              <span className="text-slate-400">
+                Page <span className="text-white font-bold">{page}</span> of <span className="text-white font-bold">{totalPages}</span>
+              </span>
+
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setPage((p) => Math.max(1, p - 1))}
+                  disabled={page === 1}
+                  className="px-3 py-1.5 rounded-xl bg-[#0b0c10] border border-white/10 text-white font-bold hover:bg-white/10 disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1 transition-all"
                 >
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="font-extrabold text-white text-sm">{lead.name}</span>
-                    <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold ${
-                      lead.status === 'New' ? 'bg-[#00dc93]/20 text-[#00dc93]' :
-                      lead.status === 'Contacted' ? 'bg-amber-500/20 text-amber-400' :
-                      lead.status === 'Won' ? 'bg-emerald-500/20 text-emerald-400' :
-                      'bg-indigo-500/20 text-indigo-400'
-                    }`}>
-                      {lead.status}
-                    </span>
-                  </div>
+                  <ChevronLeft className="w-4 h-4" />
+                  <span>Previous</span>
+                </button>
 
-                  <div className="flex items-center justify-between text-xs text-slate-400">
-                    <span>{lead.company}</span>
-                    <span className="font-mono text-[#00dc93] font-bold">{lead.budget}</span>
-                  </div>
-
-                  <div className="text-[11px] text-slate-500 line-clamp-1">
-                    {lead.message}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
+                <button
+                  onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                  disabled={page === totalPages}
+                  className="px-3 py-1.5 rounded-xl bg-[#0b0c10] border border-white/10 text-white font-bold hover:bg-white/10 disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1 transition-all"
+                >
+                  <span>Next</span>
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+          )}
         </div>
 
-        {/* Right Column: Lead Detail & Notes Drawer (Rule #44 & #45) */}
+        {/* Right Column: Lead Detail & Notes Drawer */}
         {selectedLead ? (
           <div className="lg:col-span-5 p-6 rounded-3xl bg-[#141722] border border-white/10 space-y-6">
             
@@ -202,21 +408,21 @@ export default function AdminLeadsPage() {
               <div>
                 <span className="text-[10px] font-mono text-slate-500 uppercase">{selectedLead.id}</span>
                 <h3 className="text-xl font-black text-white">{selectedLead.name}</h3>
-                <p className="text-xs text-[#00dc93] font-bold">{selectedLead.company}</p>
+                <p className="text-xs text-[#00dc93] font-bold">{selectedLead.company || 'Private Client'}</p>
               </div>
 
               {/* Status Change Selector */}
               <select
                 value={selectedLead.status}
-                onChange={(e) => handleStatusChange(selectedLead.id, e.target.value as Lead['status'])}
+                onChange={(e) => handleStatusChange(selectedLead.id, e.target.value as LeadItem['status'])}
                 className="px-3 py-1.5 rounded-xl bg-[#0b0c10] border border-[#00dc93]/40 text-[#00dc93] text-xs font-bold focus:outline-none"
               >
-                <option value="New">New</option>
-                <option value="Contacted">Contacted</option>
-                <option value="Qualified">Qualified</option>
-                <option value="Proposal Sent">Proposal Sent</option>
-                <option value="Won">Won</option>
-                <option value="Lost">Lost</option>
+                <option value="NEW">New</option>
+                <option value="CONTACTED">Contacted</option>
+                <option value="QUALIFIED">Qualified</option>
+                <option value="PROPOSAL_SENT">Proposal Sent</option>
+                <option value="WON">Won</option>
+                <option value="LOST">Lost</option>
               </select>
             </div>
 
@@ -239,6 +445,23 @@ export default function AdminLeadsPage() {
               </a>
             </div>
 
+            {/* Assignment Form */}
+            <form onSubmit={handleAssignLead} className="flex gap-2">
+              <input
+                type="text"
+                value={assignName}
+                onChange={(e) => setAssignName(e.target.value)}
+                placeholder="Assign to manager..."
+                className="flex-1 px-3 py-2 rounded-xl bg-[#0b0c10] border border-white/10 text-white text-xs focus:outline-none focus:border-[#00dc93]"
+              />
+              <button
+                type="submit"
+                className="px-3 py-2 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 text-white text-xs font-bold transition-colors"
+              >
+                Assign
+              </button>
+            </form>
+
             {/* Project Details Box */}
             <div className="p-4 rounded-2xl bg-[#0b0c10] border border-white/5 space-y-2 text-xs">
               <div className="flex items-center justify-between text-slate-400">
@@ -249,28 +472,45 @@ export default function AdminLeadsPage() {
                 <span>Estimated Budget</span>
                 <span className="text-[#00dc93] font-mono font-bold">{selectedLead.budget}</span>
               </div>
+              <div className="flex items-center justify-between text-slate-400">
+                <span>Source</span>
+                <span className="text-slate-300 font-medium">{selectedLead.source}</span>
+              </div>
               <div className="pt-2 border-t border-white/5 text-slate-300">
                 <span className="text-slate-500 font-bold block mb-1">Message:</span>
                 "{selectedLead.message}"
               </div>
             </div>
 
-            {/* Internal Notes Feed (Rule #45) */}
+            {/* Internal Notes Feed */}
             <div className="space-y-4 pt-2 border-t border-white/10">
-              <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider">
-                Internal Client Notes
-              </h4>
+              <div className="flex items-center justify-between">
+                <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+                  Internal Client Notes ({selectedLead.notes?.length || 0})
+                </h4>
+                <button
+                  onClick={() => handleDeleteLead(selectedLead.id, selectedLead.name)}
+                  className="text-xs text-red-400 hover:text-red-300 flex items-center gap-1 font-bold"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                  <span>Delete Lead</span>
+                </button>
+              </div>
 
               <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
-                {selectedLead.notes?.map((n) => (
-                  <div key={n.id} className="p-3 rounded-xl bg-[#0b0c10] border border-white/5 text-xs space-y-1">
-                    <div className="flex items-center justify-between text-[10px] text-slate-500 font-mono">
-                      <span>{n.author}</span>
-                      <span>{n.date}</span>
+                {selectedLead.notes && selectedLead.notes.length > 0 ? (
+                  selectedLead.notes.map((n) => (
+                    <div key={n.id} className="p-3 rounded-xl bg-[#0b0c10] border border-white/5 text-xs space-y-1">
+                      <div className="flex items-center justify-between text-[10px] text-slate-500 font-mono">
+                        <span>{n.author?.name || 'Administrator'}</span>
+                        <span>{new Date(n.createdAt).toLocaleDateString()}</span>
+                      </div>
+                      <p className="text-slate-300">{n.text}</p>
                     </div>
-                    <p className="text-slate-300">{n.text}</p>
-                  </div>
-                ))}
+                  ))
+                ) : (
+                  <p className="text-xs text-slate-500 italic">No notes added yet.</p>
+                )}
               </div>
 
               {/* Add Note Form */}
@@ -284,7 +524,7 @@ export default function AdminLeadsPage() {
                 />
                 <button
                   type="submit"
-                  className="px-4 py-2 rounded-xl bg-[#00dc93] text-black font-extrabold text-xs flex items-center justify-center shrink-0"
+                  className="px-4 py-2 rounded-xl bg-[#00dc93] text-black font-extrabold text-xs flex items-center justify-center shrink-0 shadow-md"
                 >
                   <Send className="w-3.5 h-3.5" />
                 </button>
