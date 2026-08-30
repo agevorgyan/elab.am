@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Language, TRANSLATIONS } from '@/lib/translations';
-import { Menu, X, Phone, ChevronRight } from 'lucide-react';
+import { Phone, Mail, ChevronRight, ChevronDown, ExternalLink } from 'lucide-react';
 
 interface HeaderProps {
   lang?: Language;
@@ -17,7 +17,9 @@ export const Header: React.FC<HeaderProps> = ({
   const [currentLang, setCurrentLang] = useState<Language>(lang);
   const t = TRANSLATIONS[currentLang].nav;
   const [scrolled, setScrolled] = useState(false);
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [servicesOpen, setServicesOpen] = useState(false);
+  const [workOpen, setWorkOpen] = useState(false);
 
   useEffect(() => {
     setCurrentLang(lang);
@@ -30,6 +32,7 @@ export const Header: React.FC<HeaderProps> = ({
     }
   };
 
+  // Rule #18: Sticky header scroll behavior
   useEffect(() => {
     const handleScroll = () => {
       setScrolled(window.scrollY > 20);
@@ -38,15 +41,43 @@ export const Header: React.FC<HeaderProps> = ({
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  const navLinks = [
-    { href: '/#services', label: t.services },
-    { href: '/#portfolio', label: t.portfolio },
-    { href: '/#why-us', label: t.whyUs },
-    { href: '/#process', label: t.process },
-    { href: '/#pricing', label: t.pricing },
-    { href: '/#tech', label: t.tech },
-    { href: '/#faq', label: t.faq },
-    { href: '/#contact', label: t.contact },
+  // Rule #8: Body Scroll Lock
+  useEffect(() => {
+    if (menuOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [menuOpen]);
+
+  // Rule #7: Close on Escape key press
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && menuOpen) {
+        setMenuOpen(false);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [menuOpen]);
+
+  const serviceSubmenu = [
+    { href: '/#services', label: 'Landing Pages (Լենդինգ Էջ)' },
+    { href: '/#services', label: 'Corporate Websites (Կորպորատիվ Կայք)' },
+    { href: '/#services', label: 'Online Stores (Օնլայն Խանութ)' },
+    { href: '/#services', label: 'Restaurant QR Menus (Ռեստորանային QR)' },
+    { href: '/#services', label: 'Business Card Websites (Այցեքարտ)' },
+    { href: '/#services', label: 'Custom Development' },
+  ];
+
+  const workSubmenu = [
+    { href: '/work', label: 'All Case Studies (Բոլոր Աշխատանքները)' },
+    { href: '/work?category=ecommerce', label: 'E-Commerce Projects' },
+    { href: '/work?category=corporate', label: 'Corporate Websites' },
+    { href: '/work?category=landing-page', label: 'Landing Pages' },
   ];
 
   return (
@@ -58,8 +89,8 @@ export const Header: React.FC<HeaderProps> = ({
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between">
           
-          {/* Brand Logo */}
-          <Link href="/" className="flex items-center gap-3 group">
+          {/* 1. eLab Logo on Left (Rule #1) */}
+          <Link href="/" className="flex items-center gap-3 group z-50">
             <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-[#00dc93] to-[#3b82f6] p-[2px] shadow-lg shadow-[#00dc93]/20 transition-transform group-hover:scale-105">
               <div className="w-full h-full bg-[#0b0c10] rounded-[10px] flex items-center justify-center">
                 <span className="font-extrabold text-xl text-white tracking-tighter">e</span>
@@ -76,22 +107,10 @@ export const Header: React.FC<HeaderProps> = ({
             </div>
           </Link>
 
-          {/* Desktop Navigation */}
-          <nav className="hidden lg:flex items-center gap-1 bg-[#141722]/80 backdrop-blur-md px-4 py-1.5 rounded-full border border-white/10 shadow-inner">
-            {navLinks.map((link) => (
-              <a
-                key={link.href}
-                href={link.href}
-                className="px-3 py-1.5 text-xs font-medium text-slate-300 hover:text-[#00dc93] transition-colors rounded-full hover:bg-white/5"
-              >
-                {link.label}
-              </a>
-            ))}
-          </nav>
-
-          {/* Right Controls */}
-          <div className="hidden lg:flex items-center gap-4">
-            {/* Language Selector */}
+          {/* Right Header Controls: Language + Phone + Burger Button */}
+          <div className="flex items-center gap-3 sm:gap-4 z-50">
+            
+            {/* Multilingual Selector */}
             <div className="flex items-center bg-[#141722] border border-white/10 rounded-full p-1 text-xs">
               {(['hy', 'en', 'ru'] as Language[]).map((l) => (
                 <button
@@ -109,91 +128,240 @@ export const Header: React.FC<HeaderProps> = ({
               ))}
             </div>
 
-            {/* Direct Phone Call */}
+            {/* Direct Phone Link */}
             <a
               href="tel:+37455776066"
-              className="flex items-center gap-2 text-xs text-slate-300 hover:text-[#00dc93] font-medium transition-colors border border-white/10 px-3 py-2 rounded-full bg-white/5"
+              className="hidden sm:flex items-center gap-2 text-xs text-slate-300 hover:text-[#00dc93] font-medium transition-colors border border-white/10 px-3 py-2 rounded-full bg-white/5"
             >
               <Phone className="w-3.5 h-3.5 text-[#00dc93]" />
-              <span>+374 55 776066</span>
+              <span>+374 55 77 60 66</span>
             </a>
 
-            {/* Primary CTA */}
-            <a
-              href="/#contact"
-              className="relative group overflow-hidden rounded-full p-[1px] font-semibold text-xs transition-all duration-300 hover:shadow-lg hover:shadow-[#00dc93]/30"
-            >
-              <span className="absolute inset-0 bg-gradient-to-r from-[#00dc93] via-[#38ef7d] to-[#3b82f6] rounded-full transition-transform group-hover:scale-105" />
-              <span className="relative flex items-center gap-2 bg-[#0b0c10] text-white px-5 py-2.5 rounded-full transition-colors group-hover:bg-transparent group-hover:text-black font-bold">
-                <span>{t.cta}</span>
-                <ChevronRight className="w-4 h-4 text-[#00dc93] group-hover:text-black transition-colors" />
-              </span>
-            </a>
-          </div>
-
-          {/* Mobile Drawer Toggle */}
-          <div className="flex lg:hidden items-center gap-3">
-            <div className="flex items-center bg-[#141722] border border-white/10 rounded-full p-0.5 text-[11px]">
-              {(['hy', 'en', 'ru'] as Language[]).map((l) => (
-                <button
-                  key={l}
-                  type="button"
-                  onClick={() => handleLangSelect(l)}
-                  className={`px-2 py-0.5 rounded-full font-bold uppercase ${
-                    currentLang === l ? 'bg-[#00dc93] text-black' : 'text-slate-400'
-                  }`}
-                >
-                  {l}
-                </button>
-              ))}
-            </div>
-
+            {/* PREMIUM BURGER MENU TOGGLE BUTTON (Rules #1, #9, #17) */}
             <button
               type="button"
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              aria-label="Toggle Menu"
-              className="p-2.5 rounded-xl bg-[#141722] border border-white/10 text-white hover:text-[#00dc93] transition-colors"
+              onClick={() => setMenuOpen(!menuOpen)}
+              aria-label={menuOpen ? 'Close navigation' : 'Open navigation'}
+              aria-expanded={menuOpen}
+              aria-controls="burger-menu-overlay"
+              className="p-3 rounded-2xl bg-[#141722] border border-white/15 text-white hover:text-[#00dc93] hover:border-[#00dc93]/50 transition-all shadow-xl group flex items-center justify-center"
             >
-              {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+              <div className="w-6 h-5 relative flex flex-col justify-between">
+                <span
+                  className={`w-full h-0.5 bg-current rounded-full transition-all duration-300 ${
+                    menuOpen ? 'rotate-45 translate-y-2 bg-[#00dc93]' : ''
+                  }`}
+                />
+                <span
+                  className={`w-full h-0.5 bg-current rounded-full transition-all duration-300 ${
+                    menuOpen ? 'opacity-0 scale-0' : ''
+                  }`}
+                />
+                <span
+                  className={`w-full h-0.5 bg-current rounded-full transition-all duration-300 ${
+                    menuOpen ? '-rotate-45 -translate-y-2.5 bg-[#00dc93]' : ''
+                  }`}
+                />
+              </div>
             </button>
+
           </div>
 
         </div>
       </div>
 
-      {/* Mobile Menu */}
-      {mobileMenuOpen && (
-        <div className="lg:hidden fixed inset-x-0 top-[70px] bg-[#0b0c10]/95 backdrop-blur-xl border-b border-white/10 py-6 px-6 shadow-2xl transition-all">
-          <div className="flex flex-col gap-4">
-            {navLinks.map((link) => (
-              <a
-                key={link.href}
-                href={link.href}
-                onClick={() => setMobileMenuOpen(false)}
-                className="text-base font-semibold text-slate-200 hover:text-[#00dc93] py-2 border-b border-white/5 flex items-center justify-between"
-              >
-                <span>{link.label}</span>
-                <ChevronRight className="w-4 h-4 text-slate-500" />
-              </a>
-            ))}
+      {/* FULL-SCREEN / SPACIOUS OVERLAY BURGER MENU (Rules #2, #3, #11) */}
+      {menuOpen && (
+        <div
+          id="burger-menu-overlay"
+          className="fixed inset-0 z-40 bg-[#090a0f]/95 backdrop-blur-2xl overflow-y-auto pt-32 pb-12 px-6 sm:px-12 animate-fadeIn flex flex-col justify-between"
+        >
+          <div className="max-w-6xl mx-auto w-full grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
             
-            <div className="pt-4 flex flex-col gap-3">
-              <a
-                href="tel:+37455776066"
-                className="flex items-center justify-center gap-2 py-3 rounded-xl bg-white/5 border border-white/10 text-white font-medium text-sm"
-              >
-                <Phone className="w-4 h-4 text-[#00dc93]" />
-                <span>+374 55 77 60 66</span>
-              </a>
+            {/* Left/Main Column: Navigation Links (Rules #3, #4, #5) */}
+            <nav className="lg:col-span-7 space-y-6">
+              
+              {/* Home */}
+              <div>
+                <Link
+                  href="/"
+                  onClick={() => setMenuOpen(false)}
+                  className="text-3xl sm:text-4xl lg:text-5xl font-black text-white hover:text-[#00dc93] transition-colors inline-block tracking-tight"
+                >
+                  Home
+                </Link>
+              </div>
 
+              {/* Services Submenu Accordion (Rule #4) */}
+              <div className="space-y-2">
+                <button
+                  onClick={() => setServicesOpen(!servicesOpen)}
+                  className="text-3xl sm:text-4xl lg:text-5xl font-black text-white hover:text-[#00dc93] transition-colors flex items-center gap-4 tracking-tight"
+                >
+                  <span>Services</span>
+                  <ChevronDown className={`w-8 h-8 text-[#00dc93] transition-transform duration-300 ${servicesOpen ? 'rotate-180' : ''}`} />
+                </button>
+
+                {servicesOpen && (
+                  <div className="pl-4 sm:pl-8 space-y-2 pt-2 border-l-2 border-[#00dc93]/30 animate-fadeIn">
+                    {serviceSubmenu.map((sub) => (
+                      <a
+                        key={sub.label}
+                        href={sub.href}
+                        onClick={() => setMenuOpen(false)}
+                        className="block text-sm sm:text-base font-bold text-slate-300 hover:text-[#00dc93] transition-colors"
+                      >
+                        {sub.label}
+                      </a>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Work / Portfolio Submenu Accordion (Rule #5) */}
+              <div className="space-y-2">
+                <button
+                  onClick={() => setWorkOpen(!workOpen)}
+                  className="text-3xl sm:text-4xl lg:text-5xl font-black text-white hover:text-[#00dc93] transition-colors flex items-center gap-4 tracking-tight"
+                >
+                  <span>Work & Cases</span>
+                  <ChevronDown className={`w-8 h-8 text-[#00dc93] transition-transform duration-300 ${workOpen ? 'rotate-180' : ''}`} />
+                </button>
+
+                {workOpen && (
+                  <div className="pl-4 sm:pl-8 space-y-2 pt-2 border-l-2 border-[#00dc93]/30 animate-fadeIn">
+                    {workSubmenu.map((sub) => (
+                      <Link
+                        key={sub.label}
+                        href={sub.href}
+                        onClick={() => setMenuOpen(false)}
+                        className="block text-sm sm:text-base font-bold text-slate-300 hover:text-[#00dc93] transition-colors"
+                      >
+                        {sub.label}
+                      </Link>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Why eLab */}
+              <div>
+                <a
+                  href="/#why-us"
+                  onClick={() => setMenuOpen(false)}
+                  className="text-3xl sm:text-4xl lg:text-5xl font-black text-white hover:text-[#00dc93] transition-colors inline-block tracking-tight"
+                >
+                  Why eLab
+                </a>
+              </div>
+
+              {/* Process */}
+              <div>
+                <a
+                  href="/#process"
+                  onClick={() => setMenuOpen(false)}
+                  className="text-3xl sm:text-4xl lg:text-5xl font-black text-white hover:text-[#00dc93] transition-colors inline-block tracking-tight"
+                >
+                  Process
+                </a>
+              </div>
+
+              {/* Pricing */}
+              <div>
+                <a
+                  href="/#pricing"
+                  onClick={() => setMenuOpen(false)}
+                  className="text-3xl sm:text-4xl lg:text-5xl font-black text-white hover:text-[#00dc93] transition-colors inline-block tracking-tight"
+                >
+                  Pricing
+                </a>
+              </div>
+
+              {/* FAQ */}
+              <div>
+                <a
+                  href="/#faq"
+                  onClick={() => setMenuOpen(false)}
+                  className="text-3xl sm:text-4xl lg:text-5xl font-black text-white hover:text-[#00dc93] transition-colors inline-block tracking-tight"
+                >
+                  FAQ
+                </a>
+              </div>
+
+              {/* Contact */}
+              <div>
+                <a
+                  href="/#contact"
+                  onClick={() => setMenuOpen(false)}
+                  className="text-3xl sm:text-4xl lg:text-5xl font-black text-white hover:text-[#00dc93] transition-colors inline-block tracking-tight"
+                >
+                  Contact
+                </a>
+              </div>
+
+            </nav>
+
+            {/* Right Column: Contact Details, CTA & Social Links (Rules #14, #15) */}
+            <div className="lg:col-span-5 space-y-8 p-8 rounded-3xl bg-[#141722] border border-white/10 shadow-2xl">
+              
+              <div className="space-y-3">
+                <span className="text-xs font-bold text-[#00dc93] uppercase tracking-widest block">
+                  Let's Build Something Better
+                </span>
+                <h3 className="text-xl sm:text-2xl font-black text-white leading-tight">
+                  Have a project in mind? Let's engineer your digital solution.
+                </h3>
+              </div>
+
+              {/* Start Project CTA (Rule #14) */}
               <a
                 href="/#contact"
-                onClick={() => setMobileMenuOpen(false)}
-                className="w-full text-center py-3.5 rounded-xl bg-gradient-to-r from-[#00dc93] to-[#38ef7d] text-black font-bold text-sm shadow-lg shadow-[#00dc93]/20"
+                onClick={() => setMenuOpen(false)}
+                className="w-full py-4 rounded-2xl bg-[#00dc93] hover:bg-[#38ef7d] text-black font-black text-sm flex items-center justify-center gap-2 shadow-xl shadow-[#00dc93]/20 hover:scale-[1.02] transition-all"
               >
-                {t.cta}
+                <span>Start a Project →</span>
               </a>
+
+              {/* Contact Info (Rule #15) */}
+              <div className="space-y-3 pt-4 border-t border-white/10 text-xs">
+                <a href="tel:+37455776066" className="flex items-center gap-3 text-white hover:text-[#00dc93] transition-colors font-bold text-sm">
+                  <Phone className="w-4 h-4 text-[#00dc93]" />
+                  <span>+374 55 77 60 66</span>
+                </a>
+
+                <a href="mailto:info@elab.am" className="flex items-center gap-3 text-slate-300 hover:text-[#00dc93] transition-colors font-medium">
+                  <Mail className="w-4 h-4 text-[#00dc93]" />
+                  <span>info@elab.am</span>
+                </a>
+
+                <div className="text-slate-500 pt-1">
+                  Yerevan, Armenia
+                </div>
+              </div>
+
+              {/* Social Channels (Rule #15) */}
+              <div className="pt-4 border-t border-white/10 space-y-2">
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">
+                  Social Channels
+                </span>
+                <div className="flex items-center gap-4 text-xs font-bold text-slate-300">
+                  <a href="https://www.facebook.com/elab.am" target="_blank" rel="noopener noreferrer" className="hover:text-[#00dc93] transition-colors">
+                    Facebook
+                  </a>
+                  <a href="https://www.instagram.com/elab.armenia/" target="_blank" rel="noopener noreferrer" className="hover:text-[#00dc93] transition-colors">
+                    Instagram
+                  </a>
+                  <a href="https://www.linkedin.com/company/elab-armenia/" target="_blank" rel="noopener noreferrer" className="hover:text-[#00dc93] transition-colors">
+                    LinkedIn
+                  </a>
+                  <a href="https://www.youtube.com/@eLab-armenia" target="_blank" rel="noopener noreferrer" className="hover:text-[#00dc93] transition-colors">
+                    YouTube
+                  </a>
+                </div>
+              </div>
+
             </div>
+
           </div>
         </div>
       )}

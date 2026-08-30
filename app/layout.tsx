@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import './globals.css';
 import { JsonLd } from '@/components/seo/JsonLd';
+import { CookieConsent } from '@/components/ui/CookieConsent';
 
 export const metadata: Metadata = {
   title: 'eLab — Web Development & Digital Solutions in Armenia | elab.am',
@@ -65,6 +66,7 @@ export default function RootLayout({
       </head>
       <body className="antialiased bg-[#0b0c10] text-[#f8fafc]">
         {children}
+        <CookieConsent />
       </body>
     </html>
   );

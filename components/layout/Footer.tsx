@@ -3,7 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { Language, TRANSLATIONS } from '@/lib/translations';
-import { Phone, Mail, ArrowUp } from 'lucide-react';
+import { Phone, Mail, ArrowUp, ShieldCheck } from 'lucide-react';
 
 interface FooterProps {
   lang: Language;
@@ -14,6 +14,13 @@ export const Footer: React.FC<FooterProps> = ({ lang }) => {
 
   const scrollToTop = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const reopenCookiePreferences = () => {
+    try {
+      localStorage.removeItem('elab_cookie_consent_v1');
+      window.location.reload();
+    } catch (e) {}
   };
 
   return (
@@ -96,23 +103,30 @@ export const Footer: React.FC<FooterProps> = ({ lang }) => {
           <div className="space-y-3">
             <h4 className="font-bold text-white uppercase text-xs tracking-wider">{t.quickLinks}</h4>
             <ul className="space-y-2">
-              <li><a href="#services" className="hover:text-[#00dc93] transition-colors">Services</a></li>
-              <li><a href="#portfolio" className="hover:text-[#00dc93] transition-colors">Portfolio</a></li>
-              <li><a href="#why-us" className="hover:text-[#00dc93] transition-colors">Why eLab</a></li>
-              <li><a href="#process" className="hover:text-[#00dc93] transition-colors">Process</a></li>
-              <li><a href="#pricing" className="hover:text-[#00dc93] transition-colors">Pricing</a></li>
+              <li><a href="/#services" className="hover:text-[#00dc93] transition-colors">Services</a></li>
+              <li><Link href="/work" className="hover:text-[#00dc93] transition-colors">Portfolio Work</Link></li>
+              <li><a href="/#why-us" className="hover:text-[#00dc93] transition-colors">Why eLab</a></li>
+              <li><a href="/#process" className="hover:text-[#00dc93] transition-colors">Process</a></li>
+              <li><a href="/#pricing" className="hover:text-[#00dc93] transition-colors">Pricing Tiers</a></li>
             </ul>
           </div>
 
-          {/* Services Links */}
+          {/* Legal Documents Section (Rule #2 & #40) */}
           <div className="space-y-3">
-            <h4 className="font-bold text-white uppercase text-xs tracking-wider">{t.services}</h4>
+            <h4 className="font-bold text-white uppercase text-xs tracking-wider">Legal & Privacy</h4>
             <ul className="space-y-2">
-              <li><a href="#services" className="hover:text-[#00dc93] transition-colors">Landing Pages</a></li>
-              <li><a href="#services" className="hover:text-[#00dc93] transition-colors">Corporate Websites</a></li>
-              <li><a href="#services" className="hover:text-[#00dc93] transition-colors">Online Stores (E-Commerce)</a></li>
-              <li><a href="#services" className="hover:text-[#00dc93] transition-colors">Restaurant QR Menus</a></li>
-              <li><a href="#services" className="hover:text-[#00dc93] transition-colors">Custom Web Development</a></li>
+              <li><Link href="/terms" className="hover:text-[#00dc93] transition-colors">Terms of Use</Link></li>
+              <li><Link href="/privacy" className="hover:text-[#00dc93] transition-colors">Privacy Policy</Link></li>
+              <li><Link href="/cookies" className="hover:text-[#00dc93] transition-colors">Cookie Policy</Link></li>
+              <li>
+                <button
+                  onClick={reopenCookiePreferences}
+                  className="hover:text-[#00dc93] text-slate-400 transition-colors flex items-center gap-1 font-medium"
+                >
+                  <ShieldCheck className="w-3.5 h-3.5 text-[#00dc93]" />
+                  <span>Cookie Settings</span>
+                </button>
+              </li>
             </ul>
           </div>
 
@@ -141,8 +155,8 @@ export const Footer: React.FC<FooterProps> = ({ lang }) => {
           <p>© {new Date().getFullYear()} eLab.am. {t.rights}</p>
 
           <div className="flex items-center gap-6 text-xs">
-            <a href="#contact" className="hover:text-slate-300 transition-colors">{t.terms}</a>
-            <a href="#contact" className="hover:text-slate-300 transition-colors">{t.privacy}</a>
+            <Link href="/terms" className="hover:text-slate-300 transition-colors">{t.terms}</Link>
+            <Link href="/privacy" className="hover:text-slate-300 transition-colors">{t.privacy}</Link>
             
             <button
               onClick={scrollToTop}
