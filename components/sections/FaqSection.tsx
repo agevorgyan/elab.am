@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Language, TRANSLATIONS } from '@/lib/translations';
 import { HelpCircle, ChevronDown } from 'lucide-react';
 
@@ -8,13 +8,37 @@ interface FaqSectionProps {
   lang: Language;
 }
 
+interface DbFaqItem {
+  id: string;
+  question: string;
+  answer: string;
+  category: string;
+}
+
 export const FaqSection: React.FC<FaqSectionProps> = ({ lang }) => {
   const t = TRANSLATIONS[lang].faq;
   const [openIndex, setOpenIndex] = useState<number | null>(0);
+  const [dbFaqs, setDbFaqs] = useState<DbFaqItem[]>([]);
+
+  useEffect(() => {
+    fetch('/api/faq')
+      .then((res) => res.json())
+      .then((data) => {
+        if (Array.isArray(data.faqs) && data.faqs.length > 0) {
+          setDbFaqs(data.faqs);
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   const toggleAccordion = (index: number) => {
     setOpenIndex(openIndex === index ? null : index);
   };
+
+  // Render published database items if available, else static translation fallback
+  const displayItems = dbFaqs.length > 0
+    ? dbFaqs.map((f) => ({ q: f.question, a: f.answer }))
+    : t.items;
 
   return (
     <section id="faq" className="py-24 bg-[#0b0c10] relative">
@@ -36,7 +60,7 @@ export const FaqSection: React.FC<FaqSectionProps> = ({ lang }) => {
 
         {/* Accordion List */}
         <div className="space-y-4">
-          {t.items.map((item, index) => {
+          {displayItems.map((item, index) => {
             const isOpen = openIndex === index;
             return (
               <div

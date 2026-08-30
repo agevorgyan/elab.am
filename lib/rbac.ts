@@ -67,4 +67,5 @@ export const ROUTE_PERMISSIONS: Record<string, Permission> = {
   '/admin/media': 'manage_media',
   '/admin/seo': 'manage_seo',
   '/admin/settings': 'manage_settings',
+  '/admin/audit-logs': 'view_audit_logs',
 };

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { verifyPassword, createAdminSession } from '@/lib/auth';
+import { logAuditAction } from '@/lib/audit-logger';
 
 // Valid Argon2id dummy hash for constant-time timing attack mitigation
 const DUMMY_ARGON2_HASH = '$argon2id$v=19$m=65536,t=3,p=4$c29tZXNhbHQxMjM0NTY3OA$12345678901234567890123456789012';
@@ -26,6 +27,14 @@ export async function POST(req: NextRequest) {
     // If user not found, perform dummy verification to prevent timing attack enumeration
     if (!user) {
       await verifyPassword(password, DUMMY_ARGON2_HASH).catch(() => {});
+      logAuditAction({
+        req,
+        action: 'LOGIN_FAILED',
+        entityType: 'User',
+        resource: 'Auth:Login',
+        details: `Failed login attempt for nonexistent user email: ${normalizedEmail}`,
+      }).catch(() => {});
+
       return NextResponse.json(
         { error: 'Invalid email or password.' },
         { status: 401 }
@@ -36,6 +45,16 @@ export async function POST(req: NextRequest) {
     const isValid = await verifyPassword(password, user.passwordHash);
 
     if (!isValid) {
+      logAuditAction({
+        req,
+        userId: user.id,
+        action: 'LOGIN_FAILED',
+        entityType: 'User',
+        entityId: user.id,
+        resource: `User:${user.id}`,
+        details: `Failed login attempt with invalid password for user: ${user.email}`,
+      }).catch(() => {});
+
       return NextResponse.json(
         { error: 'Invalid email or password.' },
         { status: 401 }
@@ -46,14 +65,14 @@ export async function POST(req: NextRequest) {
     await createAdminSession(user.id);
 
     // Record audit log entry
-    await prisma.auditLog.create({
-      data: {
-        userId: user.id,
-        action: 'ADMIN_LOGIN_SUCCESS',
-        resource: '/admin/login',
-        details: `User ${user.email} authenticated successfully.`,
-        ipAddress: req.headers.get('x-forwarded-for') || '127.0.0.1',
-      },
+    logAuditAction({
+      req,
+      userId: user.id,
+      action: 'LOGIN_SUCCESS',
+      entityType: 'User',
+      entityId: user.id,
+      resource: `User:${user.id}`,
+      details: `User ${user.email} logged in successfully.`,
     }).catch(() => {});
 
     return NextResponse.json({
@@ -67,8 +86,8 @@ export async function POST(req: NextRequest) {
     });
   } catch {
     return NextResponse.json(
-      { error: 'Invalid email or password.' },
-      { status: 401 }
+      { error: 'Authentication failed. Please try again later.' },
+      { status: 500 }
     );
   }
 }

@@ -10,6 +10,7 @@ import { ServicesSection } from '@/components/sections/ServicesSection';
 import { WhyElab } from '@/components/sections/WhyElab';
 import { ProcessSection } from '@/components/sections/ProcessSection';
 import { PricingSection } from '@/components/sections/PricingSection';
+import { TestimonialsSection } from '@/components/sections/TestimonialsSection';
 import { TechStack } from '@/components/sections/TechStack';
 import { FaqSection } from '@/components/sections/FaqSection';
 import { FinalCta } from '@/components/sections/FinalCta';
@@ -45,7 +46,10 @@ export default function Home() {
       {/* 07. Transparent Pricing Tiers */}
       <PricingSection lang={lang} />
 
-      {/* 08. Technology Stack Showcase */}
+      {/* 08. Real Client Testimonials */}
+      <TestimonialsSection lang={lang} />
+
+      {/* 09. Technology Stack Showcase */}
       <TechStack lang={lang} />
 
       {/* 09. Frequently Asked Questions */}

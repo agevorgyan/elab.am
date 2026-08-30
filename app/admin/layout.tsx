@@ -59,6 +59,7 @@ export default async function AdminLayout({
     { href: '/admin/media', label: 'Media Library', icon: ImageIcon, permission: 'manage_media' },
     { href: '/admin/seo', label: 'SEO Metadata', icon: Search, permission: 'manage_seo' },
     { href: '/admin/settings', label: 'Site Settings', icon: Settings, permission: 'manage_settings' },
+    { href: '/admin/audit-logs', label: 'System Audit Logs', icon: ShieldCheck, permission: 'view_audit_logs' },
   ];
 
   const visibleNavItems = allNavItems.filter((item) => hasPermission(currentAdmin.role, item.permission));

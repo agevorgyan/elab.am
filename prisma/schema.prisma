@@ -277,16 +277,19 @@ model ServiceFeature {
 // ------------------------------------------------------
 model Testimonial {
   id        String   @id @default(cuid())
-  client    String
-  company   String
-  quote     String
+  name      String
+  company   String?
+  position  String?
+  content   String
+  photo     String?
   rating    Int      @default(5)
-  avatarUrl String?
   published Boolean  @default(true)
   sortOrder Int      @default(0)
   createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([published])
+  @@index([sortOrder])
 }
 
 // ------------------------------------------------------
@@ -300,9 +303,11 @@ model FAQ {
   sortOrder Int      @default(0)
   published Boolean  @default(true)
   createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([category])
   @@index([published])
+  @@index([sortOrder])
 }
 
 // ------------------------------------------------------
@@ -355,16 +360,20 @@ model CookieSettings {
 // 18. AuditLog Model
 // ------------------------------------------------------
 model AuditLog {
-  id        String   @id @default(cuid())
-  userId    String?
-  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
-  action    String
-  resource  String
-  details   String?
-  ipAddress String?
-  createdAt DateTime @default(now())
+  id         String   @id @default(cuid())
+  userId     String?
+  user       User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  action     String
+  entityType String?
+  entityId   String?
+  resource   String
+  details    String?
+  ipAddress  String?
+  userAgent  String?
+  createdAt  DateTime @default(now())
 
   @@index([userId])
   @@index([action])
+  @@index([entityType])
   @@index([createdAt])
 }
