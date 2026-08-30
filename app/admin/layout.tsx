@@ -4,6 +4,7 @@ import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { getCurrentAdmin } from '@/lib/auth';
 import { hasPermission, ROUTE_PERMISSIONS, Permission } from '@/lib/rbac';
+import { BrandLogo } from '@/components/ui/BrandLogo';
 import {
   LayoutDashboard,
   Users,
@@ -26,22 +27,18 @@ export default async function AdminLayout({
   const headerList = await headers();
   const pathname = headerList.get('x-pathname') || '/admin/dashboard';
 
-  // Allow unauthenticated rendering only for /admin/login and /admin/forgot-password
   if (pathname === '/admin/login' || pathname === '/admin/forgot-password') {
     return <>{children}</>;
   }
 
-  // Server-side database session verification
   const currentAdmin = await getCurrentAdmin();
 
   if (!currentAdmin) {
     redirect(`/admin/login?redirect=${encodeURIComponent(pathname)}`);
   }
 
-  // Server-side RBAC Permission Verification for requested path (Rule #4)
   const requiredPermission = ROUTE_PERMISSIONS[pathname];
   if (requiredPermission && !hasPermission(currentAdmin.role, requiredPermission)) {
-    // If role lacks permission for requested route, redirect to /admin/dashboard
     redirect('/admin/dashboard');
   }
 
@@ -55,7 +52,6 @@ export default async function AdminLayout({
     { href: '/admin/settings', label: 'Site Settings', icon: Settings, permission: 'manage_settings' },
   ];
 
-  // Filter sidebar navigation according to active user role permissions (Rule #5)
   const visibleNavItems = allNavItems.filter((item) => hasPermission(currentAdmin.role, item.permission));
 
   return (
@@ -65,20 +61,16 @@ export default async function AdminLayout({
       <aside className="w-64 bg-[#0d0e14] border-r border-white/10 flex flex-col justify-between p-5 shrink-0 hidden md:flex">
         <div className="space-y-8">
           
-          {/* Official eLab SVG Logo */}
-          <Link href="/admin/dashboard" className="block group">
-            <img
-              src="https://elab.am/wp-content/uploads/2024/02/Artboard-2.svg"
-              alt="eLab Digital Studio Logo"
-              className="h-12 sm:h-14 w-auto object-contain transition-transform group-hover:scale-105"
-            />
+          {/* Centralized Managed eLab Brand Logo in Admin Layout */}
+          <div>
+            <BrandLogo href="/admin/dashboard" className="h-12 sm:h-14 w-auto" />
             <div className="text-[10px] text-[#00dc93] font-bold uppercase tracking-widest mt-1 flex items-center gap-1">
               <span>CMS + Mini CRM</span>
               <span className="px-1.5 py-0.5 rounded bg-white/10 text-white font-mono text-[9px]">
                 {currentAdmin.role}
               </span>
             </div>
-          </Link>
+          </div>
 
           {/* Navigation Links */}
           <nav className="space-y-1.5">

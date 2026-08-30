@@ -3,6 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { Language, TRANSLATIONS } from '@/lib/translations';
+import { BrandLogo } from '@/components/ui/BrandLogo';
 import { Phone, Mail, ArrowUp, ShieldCheck } from 'lucide-react';
 
 interface FooterProps {
@@ -20,7 +21,7 @@ export const Footer: React.FC<FooterProps> = ({ lang }) => {
     try {
       localStorage.removeItem('elab_cookie_consent_v1');
       window.location.reload();
-    } catch (e) {}
+    } catch {}
   };
 
   return (
@@ -29,15 +30,9 @@ export const Footer: React.FC<FooterProps> = ({ lang }) => {
         
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8">
           
-          {/* Official eLab SVG Logo - Rendered 2x Scale (Rule #3) */}
+          {/* Centralized Managed eLab Brand Logo in Footer (Rule #7) */}
           <div className="lg:col-span-2 space-y-4">
-            <Link href="/" className="inline-block group">
-              <img
-                src="https://elab.am/wp-content/uploads/2024/02/Artboard-2.svg"
-                alt="eLab Digital Studio Logo"
-                className="h-14 sm:h-16 w-auto object-contain transition-transform group-hover:scale-105"
-              />
-            </Link>
+            <BrandLogo href="/" className="h-14 sm:h-16 w-auto" />
 
             <p className="text-xs text-slate-400 leading-relaxed max-w-sm">
               {t.desc}

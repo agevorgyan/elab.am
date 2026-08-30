@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Language, TRANSLATIONS } from '@/lib/translations';
+import { BrandLogo } from '@/components/ui/BrandLogo';
 import { Phone, Mail, ChevronDown } from 'lucide-react';
 
 interface HeaderProps {
@@ -86,16 +87,10 @@ export const Header: React.FC<HeaderProps> = ({
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between">
           
-          {/* Official eLab SVG Logo - Rendered 2x Larger Display Scale (Rule #3) */}
-          <Link href="/" className="flex items-center gap-3 group z-50">
-            <div className="h-14 sm:h-16 w-auto flex items-center justify-center">
-              <img
-                src="https://elab.am/wp-content/uploads/2024/02/Artboard-2.svg"
-                alt="eLab Digital Studio Logo"
-                className="h-14 sm:h-16 w-auto object-contain transition-transform group-hover:scale-105"
-              />
-            </div>
-          </Link>
+          {/* Centralized Managed eLab Brand Logo (Rules #5, #13) */}
+          <div className="z-50">
+            <BrandLogo href="/" className="h-14 sm:h-16 w-auto" />
+          </div>
 
           {/* Right Header Controls: Language + Phone + Burger Button */}
           <div className="flex items-center gap-3 sm:gap-4 z-50">
@@ -160,7 +155,7 @@ export const Header: React.FC<HeaderProps> = ({
         </div>
       </div>
 
-      {/* Full-Screen Overlay Menu with 2x Logo (Rule #4) */}
+      {/* Full-Screen Overlay Menu with Centralized Managed Logo (Rule #6) */}
       {menuOpen && (
         <div
           id="burger-menu-overlay"

@@ -1,5 +1,6 @@
 import React from 'react';
 import Link from 'next/link';
+import { BrandLogo } from '@/components/ui/BrandLogo';
 import { Home, Layers, Sparkles } from 'lucide-react';
 
 export default function NotFound() {
@@ -9,13 +10,7 @@ export default function NotFound() {
       {/* Simple Header */}
       <header className="p-6 border-b border-white/5">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
-          <Link href="/" className="inline-block group">
-            <img
-              src="https://elab.am/wp-content/uploads/2024/02/Artboard-2.svg"
-              alt="eLab Digital Studio Logo"
-              className="h-8 w-auto object-contain transition-transform group-hover:scale-105"
-            />
-          </Link>
+          <BrandLogo href="/" className="h-14 sm:h-16 w-auto" />
         </div>
       </header>
 

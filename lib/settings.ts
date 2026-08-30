@@ -4,7 +4,7 @@ import { SiteSettings } from '@/lib/admin-store';
 export const DEFAULT_SITE_SETTINGS: SiteSettings = {
   siteName: 'eLab Digital Studio',
   siteDescription: 'Modern websites, landing pages, and e-commerce solutions in Armenia.',
-  logoUrl: 'https://elab.am/wp-content/uploads/2024/02/Artboard-2.svg',
+  logoUrl: '/logo.svg',
   phone: '+374 55 77 60 66',
   email: 'hello@elab.am',
   whatsapp: '+37455776066',
@@ -45,7 +45,7 @@ export async function getSiteSettings(): Promise<SiteSettings> {
       linkedin: settingsMap['linkedin'] || DEFAULT_SITE_SETTINGS.linkedin,
       youtube: settingsMap['youtube'] || DEFAULT_SITE_SETTINGS.youtube,
     };
-  } catch (e) {
+  } catch {
     return DEFAULT_SITE_SETTINGS;
   }
 }

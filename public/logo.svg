@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 120" width="400" height="120">
+  <rect width="400" height="120" rx="20" fill="none"/>
+  <g transform="translate(10, 10)">
+    <rect x="0" y="0" width="100" height="100" rx="24" fill="url(#elab-grad)"/>
+    <rect x="4" y="4" width="92" height="92" rx="20" fill="#0b0c10"/>
+    <text x="30" y="66" font-family="system-ui, -apple-system, sans-serif" font-weight="900" font-size="52" fill="#ffffff">e</text>
+    <text x="58" y="66" font-family="system-ui, -apple-system, sans-serif" font-weight="900" font-size="52" fill="#00dc93">L</text>
+  </g>
+  <text x="124" y="72" font-family="system-ui, -apple-system, sans-serif" font-weight="900" font-size="48" fill="#ffffff" letter-spacing="-1.5">eLab<tspan fill="#00dc93">.am</tspan></text>
+  <text x="126" y="94" font-family="system-ui, -apple-system, sans-serif" font-weight="600" font-size="14" fill="#94a3b8" letter-spacing="4" text-transform="uppercase">DIGITAL STUDIO</text>
+  <defs>
+    <linearGradient id="elab-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#00dc93"/>
+      <stop offset="100%" stop-color="#3b82f6"/>
+    </linearGradient>
+  </defs>
+</svg>

@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { BrandLogo } from '@/components/ui/BrandLogo';
 import { ShieldCheck, Lock, Mail, ArrowRight, AlertCircle, KeyRound, CheckCircle2 } from 'lucide-react';
 
 export default function AdminLoginPage() {
@@ -57,15 +58,9 @@ export default function AdminLoginPage() {
       
       <div className="w-full max-w-md space-y-8">
         
-        {/* Official eLab SVG Logo */}
+        {/* Centralized Managed eLab Brand Logo in Admin Login (Rule #8) */}
         <div className="text-center space-y-4">
-          <Link href="/" className="inline-block group">
-            <img
-              src="https://elab.am/wp-content/uploads/2024/02/Artboard-2.svg"
-              alt="eLab Digital Studio Logo"
-              className="h-14 sm:h-16 w-auto mx-auto object-contain transition-transform group-hover:scale-105"
-            />
-          </Link>
+          <BrandLogo href="/" className="h-14 sm:h-16 w-auto mx-auto" />
 
           <p className="text-xs text-slate-400">
             Secure Admin Workspace · Argon2id Authentication
