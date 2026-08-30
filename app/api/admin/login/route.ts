@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { verifyPassword, createAdminSession } from '@/lib/auth';
 
+// Valid Argon2id dummy hash for constant-time timing attack mitigation
+const DUMMY_ARGON2_HASH = '$argon2id$v=19$m=65536,t=3,p=4$c29tZXNhbHQxMjM0NTY3OA$12345678901234567890123456789012';
+
 export async function POST(req: NextRequest) {
   try {
     const { email, password } = await req.json();
@@ -22,14 +25,14 @@ export async function POST(req: NextRequest) {
 
     // If user not found, perform dummy verification to prevent timing attack enumeration
     if (!user) {
-      await verifyPassword(password, '$argon2id$v=19$m=65536,t=3,p=4$dummy_hash_enumeration_prevention');
+      await verifyPassword(password, DUMMY_ARGON2_HASH).catch(() => {});
       return NextResponse.json(
         { error: 'Invalid email or password.' },
         { status: 401 }
       );
     }
 
-    // Verify password against Argon2id hash
+    // Verify password against stored Argon2id hash
     const isValid = await verifyPassword(password, user.passwordHash);
 
     if (!isValid) {
@@ -42,7 +45,7 @@ export async function POST(req: NextRequest) {
     // Create session in database & set HttpOnly cookie
     await createAdminSession(user.id);
 
-    // Audit log entry
+    // Record audit log entry
     await prisma.auditLog.create({
       data: {
         userId: user.id,
@@ -51,7 +54,7 @@ export async function POST(req: NextRequest) {
         details: `User ${user.email} authenticated successfully.`,
         ipAddress: req.headers.get('x-forwarded-for') || '127.0.0.1',
       },
-    });
+    }).catch(() => {});
 
     return NextResponse.json({
       success: true,
@@ -62,10 +65,10 @@ export async function POST(req: NextRequest) {
         role: user.role,
       },
     });
-  } catch (error) {
+  } catch {
     return NextResponse.json(
       { error: 'Invalid email or password.' },
-      { status: 500 }
+      { status: 401 }
     );
   }
 }

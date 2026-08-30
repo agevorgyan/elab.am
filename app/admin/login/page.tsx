@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useState, Suspense } from 'react';
-import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { BrandLogo } from '@/components/ui/BrandLogo';
 import { getSafeRedirectUrl } from '@/lib/redirect';
@@ -12,7 +11,7 @@ function AdminLoginForm() {
   const searchParams = useSearchParams();
   const rawRedirect = searchParams ? searchParams.get('redirect') : null;
 
-  const [email, setEmail] = useState('hello@elab.am');
+  const [email, setEmail] = useState('admin@elab.am');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
@@ -22,6 +21,8 @@ function AdminLoginForm() {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (loading) return;
+
     setLoading(true);
     setErrorMsg('');
 
@@ -29,7 +30,10 @@ function AdminLoginForm() {
       const res = await fetch('/api/admin/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({
+          email: email.trim(),
+          password,
+        }),
       });
 
       const data = await res.json();
@@ -76,7 +80,7 @@ function AdminLoginForm() {
         className="p-8 rounded-3xl bg-[#141722] border border-white/10 shadow-2xl space-y-6"
       >
         <div className="space-y-1.5 text-xs">
-          <label className="font-bold text-slate-[#f8fafc] uppercase tracking-wider">Email Address</label>
+          <label className="font-bold text-slate-300 uppercase tracking-wider">Email Address</label>
           <div className="relative">
             <Mail className="w-4 h-4 text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
             <input
@@ -84,7 +88,7 @@ function AdminLoginForm() {
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="hello@elab.am"
+              placeholder="admin@elab.am"
               className="w-full pl-10 pr-4 py-3 rounded-xl bg-[#0b0c10] border border-white/10 text-white font-bold focus:outline-none focus:border-[#00dc93]"
             />
           </div>
@@ -169,7 +173,7 @@ function AdminLoginForm() {
                     required
                     value={resetEmail}
                     onChange={(e) => setResetEmail(e.target.value)}
-                    placeholder="hello@elab.am"
+                    placeholder="admin@elab.am"
                     className="w-full px-4 py-3 rounded-xl bg-[#0b0c10] border border-white/10 text-white focus:outline-none focus:border-[#00dc93]"
                   />
                 </div>
