@@ -8,26 +8,38 @@ import { ShieldCheck, Lock, Mail, ArrowRight, AlertCircle, KeyRound, CheckCircle
 export default function AdminLoginPage() {
   const router = useRouter();
   const [email, setEmail] = useState('hello@elab.am');
-  const [password, setPassword] = useState('••••••••••••');
+  const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
   const [forgotModal, setForgotModal] = useState(false);
   const [forgotSuccess, setForgotSuccess] = useState(false);
   const [resetEmail, setResetEmail] = useState('');
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setErrorMsg('');
 
-    setTimeout(() => {
-      setLoading(false);
-      if (!email.includes('@') || password.length < 4) {
-        setErrorMsg('Invalid email or password.');
+    try {
+      const res = await fetch('/api/admin/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok || !data.success) {
+        setErrorMsg(data.error || 'Invalid email or password.');
       } else {
         router.push('/admin/dashboard');
+        router.refresh();
       }
-    }, 600);
+    } catch {
+      setErrorMsg('Invalid email or password.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleForgotSubmit = (e: React.FormEvent) => {
@@ -45,7 +57,7 @@ export default function AdminLoginPage() {
       
       <div className="w-full max-w-md space-y-8">
         
-        {/* Official eLab SVG Logo - 2x Rendered Scale (Rules #3, #17) */}
+        {/* Official eLab SVG Logo */}
         <div className="text-center space-y-4">
           <Link href="/" className="inline-block group">
             <img
@@ -56,11 +68,11 @@ export default function AdminLoginPage() {
           </Link>
 
           <p className="text-xs text-slate-400">
-            Secure Admin Workspace · Role-Based Access Control
+            Secure Admin Workspace · Argon2id Authentication
           </p>
         </div>
 
-        {/* Login Card (Rule #6 & #8) */}
+        {/* Login Card */}
         <form
           onSubmit={handleLogin}
           className="p-8 rounded-3xl bg-[#141722] border border-white/10 shadow-2xl space-y-6"
@@ -98,12 +110,13 @@ export default function AdminLoginPage() {
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+                placeholder="••••••••••••"
                 className="w-full pl-10 pr-4 py-3 rounded-xl bg-[#0b0c10] border border-white/10 text-white font-bold focus:outline-none focus:border-[#00dc93]"
               />
             </div>
           </div>
 
-          {/* Generic Security Error Message (Rule #12) */}
+          {/* Generic Security Error Message */}
           {errorMsg && (
             <div className="p-3.5 rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 text-xs flex items-center gap-2">
               <AlertCircle className="w-4 h-4 shrink-0" />
@@ -123,12 +136,12 @@ export default function AdminLoginPage() {
 
         <div className="text-center text-xs text-slate-500 flex items-center justify-center gap-2">
           <ShieldCheck className="w-4 h-4 text-[#00dc93]" />
-          <span>Argon2 Hashed Authentication & Session Security</span>
+          <span>Argon2id Hashed Session Security</span>
         </div>
 
       </div>
 
-      {/* Forgot Password Reset Modal (Rule #15) */}
+      {/* Forgot Password Reset Modal */}
       {forgotModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fadeIn">
           <div className="w-full max-w-md rounded-3xl bg-[#141722] border border-white/15 p-6 sm:p-8 space-y-6 text-xs text-slate-300">

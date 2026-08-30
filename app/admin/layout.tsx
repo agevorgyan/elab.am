@@ -2,7 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import {
   LayoutDashboard,
   Users,
@@ -23,10 +23,19 @@ export default function AdminLayout({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
+  const router = useRouter();
 
   if (pathname === '/admin/login') {
     return <>{children}</>;
   }
+
+  const handleLogout = async () => {
+    try {
+      await fetch('/api/admin/logout', { method: 'POST' });
+    } catch {}
+    router.push('/admin/login');
+    router.refresh();
+  };
 
   const navItems = [
     { href: '/admin/dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -45,7 +54,7 @@ export default function AdminLayout({
       <aside className="w-64 bg-[#0d0e14] border-r border-white/10 flex flex-col justify-between p-5 shrink-0 hidden md:flex">
         <div className="space-y-8">
           
-          {/* Official eLab SVG Logo - Rendered 2x Scale (Rules #3, #17) */}
+          {/* Official eLab SVG Logo */}
           <Link href="/admin/dashboard" className="block group">
             <img
               src="https://elab.am/wp-content/uploads/2024/02/Artboard-2.svg"
@@ -95,7 +104,7 @@ export default function AdminLayout({
           </nav>
         </div>
 
-        {/* User Session Footer & Logout (Rule #14) */}
+        {/* User Session Footer & Logout */}
         <div className="pt-6 border-t border-white/10 space-y-4">
           <div className="flex items-center gap-3 p-3 rounded-2xl bg-white/5 border border-white/5">
             <div className="w-9 h-9 rounded-xl bg-indigo-500/20 text-indigo-400 border border-indigo-500/30 flex items-center justify-center font-black text-xs">
@@ -125,7 +134,7 @@ export default function AdminLayout({
         <header className="h-16 border-b border-white/10 bg-[#0d0e14] px-6 flex items-center justify-between">
           <div className="flex items-center gap-2 text-xs text-slate-400">
             <ShieldCheck className="w-4 h-4 text-[#00dc93]" />
-            <span className="font-mono text-slate-300">Protected Admin Session (Argon2 Hashed)</span>
+            <span className="font-mono text-slate-300">Protected Admin Session (Argon2id Hashed)</span>
           </div>
 
           <div className="flex items-center gap-4">
@@ -140,13 +149,13 @@ export default function AdminLayout({
               </button>
             </div>
 
-            <Link
-              href="/admin/login"
+            <button
+              onClick={handleLogout}
               className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-xs font-bold hover:bg-red-500/20 transition-colors"
             >
               <LogOut className="w-3.5 h-3.5" />
               <span>Sign Out</span>
-            </Link>
+            </button>
           </div>
         </header>
 
