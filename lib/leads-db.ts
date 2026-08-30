@@ -1,5 +1,5 @@
 import prisma from '@/lib/prisma';
-import { LeadStatus } from '@prisma/client';
+import { LeadStatus, Prisma } from '@prisma/client';
 
 export interface DbLeadNote {
   id: string;
@@ -42,7 +42,7 @@ export async function getPaginatedLeadsAdmin(
   sortOrder: 'asc' | 'desc' = 'desc'
 ): Promise<{ leads: DbLead[]; total: number; totalPages: number; page: number }> {
   try {
-    const where: any = {};
+    const where: Prisma.LeadWhereInput = {};
 
     if (search.trim()) {
       where.OR = [
@@ -58,8 +58,9 @@ export async function getPaginatedLeadsAdmin(
     }
 
     const skip = (page - 1) * limit;
-    const orderBy: any = {};
-    orderBy[sortBy] = sortOrder;
+    const orderBy: Prisma.LeadOrderByWithRelationInput = {
+      [sortBy]: sortOrder,
+    };
 
     const [total, leads] = await Promise.all([
       prisma.lead.count({ where }),

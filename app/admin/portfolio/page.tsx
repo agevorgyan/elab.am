@@ -1,9 +1,9 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { DbPortfolioProject } from '@/lib/portfolio-db';
-import { Plus, Search, Edit3, Eye, Trash2, CheckCircle2, AlertCircle, Copy, Star, EyeOff, Save, X } from 'lucide-react';
+import { Plus, Search, Edit3, Eye, Trash2, CheckCircle2, AlertCircle, Copy, Star, Save, X } from 'lucide-react';
 
 export default function AdminPortfolioPage() {
   const [projects, setProjects] = useState<DbPortfolioProject[]>([]);
@@ -37,9 +37,8 @@ export default function AdminPortfolioPage() {
     galleryText: '',
   });
 
-  const fetchProjects = async () => {
+  const fetchProjects = useCallback(async () => {
     try {
-      setLoading(true);
       const res = await fetch('/api/admin/portfolio');
       const data = await res.json();
       if (Array.isArray(data.projects)) {
@@ -50,10 +49,26 @@ export default function AdminPortfolioPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
-    fetchProjects();
+    let active = true;
+    fetch('/api/admin/portfolio')
+      .then((res) => res.json())
+      .then((data) => {
+        if (active && Array.isArray(data.projects)) {
+          setProjects(data.projects);
+        }
+      })
+      .catch(() => {
+        if (active) setErrorMsg('Failed to load portfolio projects');
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+    return () => {
+      active = false;
+    };
   }, []);
 
   const openCreateModal = () => {
@@ -413,7 +428,7 @@ export default function AdminPortfolioPage() {
                       const autoSlug = newTitle.toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-');
                       setFormData({ ...formData, title: newTitle, ...(!editingId && { slug: autoSlug }) });
                     }}
-                    placeholder="e.g. Gayane's Kitchen"
+                    placeholder="e.g. Gayane&#39;s Kitchen"
                     className="w-full px-4 py-3 rounded-xl bg-[#0b0c10] border border-white/10 text-white font-bold focus:outline-none focus:border-[#00dc93]"
                   />
                 </div>
@@ -439,7 +454,7 @@ export default function AdminPortfolioPage() {
                     required
                     value={formData.client}
                     onChange={(e) => setFormData({ ...formData, client: e.target.value })}
-                    placeholder="e.g. Gayane's Kitchen LLC"
+                    placeholder="e.g. Gayane&#39;s Kitchen LLC"
                     className="w-full px-4 py-3 rounded-xl bg-[#0b0c10] border border-white/10 text-white font-bold focus:outline-none focus:border-[#00dc93]"
                   />
                 </div>

@@ -57,10 +57,11 @@ export async function POST(request: Request) {
       leadId: lead.id,
       timestamp: new Date().toISOString(),
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Internal server error processing request.';
     console.error('Error processing contact submission:', error);
     return NextResponse.json(
-      { success: false, message: error.message || 'Internal server error processing request.' },
+      { success: false, message },
       { status: 500 }
     );
   }

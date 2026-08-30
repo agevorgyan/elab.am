@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAdminPermission } from '@/lib/auth';
-import { getAllServicesAdmin, createService, reorderServices } from '@/lib/services';
+import {
+  getAllServicesAdmin,
+  createServiceAdmin,
+  reorderServicesAdmin,
+} from '@/lib/services';
 import prisma from '@/lib/prisma';
 import { revalidatePath } from 'next/cache';
 
@@ -23,14 +27,14 @@ export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
 
-    // Check if reordering request
     if (body.action === 'reorder' && Array.isArray(body.orderedIds)) {
-      await reorderServices(body.orderedIds);
+      await reorderServicesAdmin(body.orderedIds);
       revalidatePath('/');
+      revalidatePath('/admin/content');
       return NextResponse.json({ success: true });
     }
 
-    const created = await createService(body);
+    const created = await createServiceAdmin(body);
 
     if (user) {
       await prisma.auditLog.create({
@@ -45,12 +49,13 @@ export async function POST(req: NextRequest) {
     }
 
     revalidatePath('/');
-    revalidatePath('/work');
+    revalidatePath('/admin/content');
 
     return NextResponse.json({ success: true, service: created });
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Failed to create service.';
     return NextResponse.json(
-      { error: error.message || 'Failed to create service.' },
+      { error: message },
       { status: 400 }
     );
   }

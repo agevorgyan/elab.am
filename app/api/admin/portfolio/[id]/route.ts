@@ -23,20 +23,21 @@ export async function PUT(
           userId: user.id,
           action: 'UPDATE_PORTFOLIO_PROJECT',
           resource: `PortfolioProject:${id}`,
-          details: `Updated portfolio project: ${updated.title} (${updated.slug})`,
+          details: `Updated project: ${updated.title} (${updated.slug})`,
           ipAddress: req.headers.get('x-forwarded-for') || '127.0.0.1',
         },
       }).catch(() => {});
     }
 
     revalidatePath('/work');
-    revalidatePath(`/work/${updated.slug}`);
+    revalidatePath('/work/[slug]', 'page');
     revalidatePath('/');
 
     return NextResponse.json({ success: true, project: updated });
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Failed to update portfolio project.';
     return NextResponse.json(
-      { error: error.message || 'Failed to update portfolio project.' },
+      { error: message },
       { status: 400 }
     );
   }
@@ -60,7 +61,7 @@ export async function DELETE(
           userId: user.id,
           action: 'DELETE_PORTFOLIO_PROJECT',
           resource: `PortfolioProject:${id}`,
-          details: `Deleted portfolio project: ${deleted.title} (${deleted.slug})`,
+          details: `Deleted project: ${deleted.title} (${deleted.slug})`,
           ipAddress: req.headers.get('x-forwarded-for') || '127.0.0.1',
         },
       }).catch(() => {});
@@ -70,9 +71,10 @@ export async function DELETE(
     revalidatePath('/');
 
     return NextResponse.json({ success: true });
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Failed to delete portfolio project.';
     return NextResponse.json(
-      { error: error.message || 'Failed to delete portfolio project.' },
+      { error: message },
       { status: 400 }
     );
   }

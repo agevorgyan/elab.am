@@ -1,9 +1,8 @@
 import React from 'react';
 import { Metadata } from 'next';
-import Link from 'next/link';
 import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
-import { ShieldCheck, FileText } from 'lucide-react';
+import { FileText } from 'lucide-react';
 
 export const metadata: Metadata = {
   title: 'Terms of Use | eLab.am Digital Studio',
@@ -47,7 +46,7 @@ export default function TermsPage() {
           <div className="space-y-3">
             <h2 className="text-lg font-extrabold text-white">1. General Information</h2>
             <p>
-              Welcome to eLab.am ("eLab", "we", "us", or "our"). By accessing or using our website located at <code className="text-[#00dc93]">https://elab.am</code>, you agree to comply with and be bound by these Terms of Use.
+              Welcome to eLab.am (&quot;eLab&quot;, &quot;we&quot;, &quot;us&quot;, or &quot;our&quot;). By accessing or using our website located at <code className="text-[#00dc93]">https://elab.am</code>, you agree to comply with and be bound by these Terms of Use.
             </p>
           </div>
 
@@ -59,7 +58,7 @@ export default function TermsPage() {
           </div>
 
           <div className="space-y-3">
-            <h2 className="text-lg font-extrabold text-white">3. Services & Information</h2>
+            <h2 className="text-lg font-extrabold text-white">3. Services &amp; Information</h2>
             <p>
               eLab provides web development, UX/UI design, e-commerce engineering, and digital solution services. The starting prices listed in AMD (Armenian Dram) on this website represent preliminary estimate baselines.
             </p>

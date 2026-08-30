@@ -17,7 +17,7 @@ export async function GET() {
     const projects = await getAllPortfolioProjectsAdmin();
     return NextResponse.json({ projects });
   } catch {
-    return NextResponse.json({ error: 'Failed to fetch admin portfolio' }, { status: 500 });
+    return NextResponse.json({ error: 'Failed to fetch admin portfolio projects' }, { status: 500 });
   }
 }
 
@@ -28,7 +28,13 @@ export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
 
-    // Check action: reorder
+    if (body.action === 'duplicate' && body.id) {
+      const duplicated = await duplicatePortfolioProject(body.id);
+      revalidatePath('/work');
+      revalidatePath('/');
+      return NextResponse.json({ success: true, project: duplicated });
+    }
+
     if (body.action === 'reorder' && Array.isArray(body.orderedIds)) {
       await reorderPortfolioProjects(body.orderedIds);
       revalidatePath('/work');
@@ -36,26 +42,6 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: true });
     }
 
-    // Check action: duplicate
-    if (body.action === 'duplicate' && body.id) {
-      const duplicated = await duplicatePortfolioProject(body.id);
-      if (user) {
-        await prisma.auditLog.create({
-          data: {
-            userId: user.id,
-            action: 'DUPLICATE_PORTFOLIO_PROJECT',
-            resource: `PortfolioProject:${duplicated.id}`,
-            details: `Duplicated portfolio project: ${duplicated.title} (${duplicated.slug})`,
-            ipAddress: req.headers.get('x-forwarded-for') || '127.0.0.1',
-          },
-        }).catch(() => {});
-      }
-      revalidatePath('/work');
-      revalidatePath('/');
-      return NextResponse.json({ success: true, project: duplicated });
-    }
-
-    // Standard Create
     const created = await createPortfolioProject(body);
 
     if (user) {
@@ -64,7 +50,7 @@ export async function POST(req: NextRequest) {
           userId: user.id,
           action: 'CREATE_PORTFOLIO_PROJECT',
           resource: `PortfolioProject:${created.id}`,
-          details: `Created portfolio project: ${created.title} (${created.slug})`,
+          details: `Created project: ${created.title} (${created.slug})`,
           ipAddress: req.headers.get('x-forwarded-for') || '127.0.0.1',
         },
       }).catch(() => {});
@@ -74,9 +60,10 @@ export async function POST(req: NextRequest) {
     revalidatePath('/');
 
     return NextResponse.json({ success: true, project: created });
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Failed to create portfolio project.';
     return NextResponse.json(
-      { error: error.message || 'Failed to create portfolio project.' },
+      { error: message },
       { status: 400 }
     );
   }

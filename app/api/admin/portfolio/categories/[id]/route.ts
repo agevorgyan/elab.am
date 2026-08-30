@@ -33,9 +33,10 @@ export async function PUT(
     revalidatePath('/');
 
     return NextResponse.json({ success: true, category: updated });
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Failed to update category.';
     return NextResponse.json(
-      { error: error.message || 'Failed to update category.' },
+      { error: message },
       { status: 400 }
     );
   }
@@ -69,9 +70,10 @@ export async function DELETE(
     revalidatePath('/');
 
     return NextResponse.json({ success: true });
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Failed to delete category.';
     return NextResponse.json(
-      { error: error.message || 'Failed to delete category.' },
+      { error: message },
       { status: 400 }
     );
   }

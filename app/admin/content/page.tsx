@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { ServiceItem } from '@/lib/services';
 import { TRANSLATIONS } from '@/lib/translations';
 import { Plus, Edit3, Trash2, CheckCircle2, AlertCircle, Eye, EyeOff, Globe2, HelpCircle, Save, X, DollarSign, Tag, Star } from 'lucide-react';
@@ -32,9 +32,8 @@ export default function AdminContentPage() {
     featuresText: '',
   });
 
-  const fetchServices = async () => {
+  const fetchServices = useCallback(async () => {
     try {
-      setLoading(true);
       const res = await fetch('/api/admin/services');
       const data = await res.json();
       if (Array.isArray(data.services)) {
@@ -45,10 +44,26 @@ export default function AdminContentPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
-    fetchServices();
+    let active = true;
+    fetch('/api/admin/services')
+      .then((res) => res.json())
+      .then((data) => {
+        if (active && Array.isArray(data.services)) {
+          setServices(data.services);
+        }
+      })
+      .catch(() => {
+        if (active) setErrorMsg('Failed to load services');
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+    return () => {
+      active = false;
+    };
   }, []);
 
   const openCreateModal = () => {
@@ -432,7 +447,7 @@ export default function AdminContentPage() {
                       className="w-4 h-4 accent-[#00dc93] rounded"
                     />
                     <label htmlFor="showPrice" className="font-bold text-white cursor-pointer">
-                      Enable price display (Uncheck for "Custom Quote")
+                      Enable price display (Uncheck for &quot;Custom Quote&quot;)
                     </label>
                   </div>
 

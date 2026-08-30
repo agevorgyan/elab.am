@@ -5,7 +5,7 @@ import { notFound } from 'next/navigation';
 import { getPortfolioProjectBySlug, getPublishedPortfolioProjects } from '@/lib/portfolio-db';
 import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
-import { ExternalLink, ArrowRight, Quote } from 'lucide-react';
+import { ExternalLink, ArrowRight } from 'lucide-react';
 
 interface CaseStudyProps {
   params: Promise<{
@@ -15,7 +15,7 @@ interface CaseStudyProps {
 
 export async function generateStaticParams() {
   const projects = await getPublishedPortfolioProjects();
-  return projects.map((project) => ({
+  return (projects ?? []).map((project) => ({
     slug: project.slug,
   }));
 }
@@ -54,9 +54,13 @@ export default async function CaseStudyPage({ params }: CaseStudyProps) {
   }
 
   const allProjects = await getPublishedPortfolioProjects();
-  const projectIndex = allProjects.findIndex((p) => p.slug === slug);
-  const nextProjectIndex = (projectIndex + 1) % allProjects.length;
-  const nextProject = allProjects[nextProjectIndex] || project;
+  const safeAllProjects = allProjects ?? [];
+  const projectIndex = safeAllProjects.findIndex((p) => p.slug === slug);
+  const nextProjectIndex = (projectIndex + 1) % (safeAllProjects.length || 1);
+  const nextProject = safeAllProjects[nextProjectIndex] || project;
+
+  const safeServices = Array.isArray(project.services) ? project.services : [];
+  const safeResults = Array.isArray(project.results) ? project.results : [];
 
   // Schema.org Structured Data for CreativeWork Case Study
   const jsonLd = {
@@ -122,7 +126,7 @@ export default async function CaseStudyPage({ params }: CaseStudyProps) {
             </div>
             <div>
               <div className="text-slate-400 font-medium">SERVICES</div>
-              <div className="text-[#00dc93] font-bold text-sm mt-0.5">{project.services.join(', ')}</div>
+              <div className="text-[#00dc93] font-bold text-sm mt-0.5">{safeServices.join(', ')}</div>
             </div>
             <div>
               <div className="text-slate-400 font-medium">CATEGORY</div>
@@ -162,35 +166,39 @@ export default async function CaseStudyPage({ params }: CaseStudyProps) {
 
           {/* Challenge & Solution Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <div className="p-8 rounded-3xl bg-[#141722] border border-white/10 space-y-4">
-              <div className="w-10 h-10 rounded-xl bg-red-500/10 text-red-400 flex items-center justify-center font-bold text-sm">
-                01
+            {project.challenge && (
+              <div className="p-8 rounded-3xl bg-[#141722] border border-white/10 space-y-4">
+                <div className="w-10 h-10 rounded-xl bg-red-500/10 text-red-400 flex items-center justify-center font-bold text-sm">
+                  01
+                </div>
+                <h3 className="text-xl font-extrabold text-white">The Challenge</h3>
+                <p className="text-xs text-slate-300 leading-relaxed">
+                  {project.challenge}
+                </p>
               </div>
-              <h3 className="text-xl font-extrabold text-white">The Challenge</h3>
-              <p className="text-xs text-slate-300 leading-relaxed">
-                {project.challenge}
-              </p>
-            </div>
+            )}
 
-            <div className="p-8 rounded-3xl bg-[#141722] border border-[#00dc93]/30 space-y-4 shadow-xl shadow-[#00dc93]/5">
-              <div className="w-10 h-10 rounded-xl bg-[#00dc93]/10 text-[#00dc93] flex items-center justify-center font-bold text-sm">
-                02
+            {project.solution && (
+              <div className="p-8 rounded-3xl bg-[#141722] border border-[#00dc93]/30 space-y-4 shadow-xl shadow-[#00dc93]/5">
+                <div className="w-10 h-10 rounded-xl bg-[#00dc93]/10 text-[#00dc93] flex items-center justify-center font-bold text-sm">
+                  02
+                </div>
+                <h3 className="text-xl font-extrabold text-white">The Solution</h3>
+                <p className="text-xs text-slate-300 leading-relaxed">
+                  {project.solution}
+                </p>
               </div>
-              <h3 className="text-xl font-extrabold text-white">The Solution</h3>
-              <p className="text-xs text-slate-300 leading-relaxed">
-                {project.solution}
-              </p>
-            </div>
+            )}
           </div>
 
           {/* Measurable Results */}
-          {project.results && project.results.length > 0 && (
+          {safeResults.length > 0 && (
             <div className="p-8 rounded-3xl bg-[#141722] border border-white/10 space-y-6">
               <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest">
                 Key Performance Results
               </h3>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-                {project.results.map((res, idx) => (
+                {safeResults.map((res, idx) => (
                   <div key={idx} className="p-6 rounded-2xl bg-white/5 border border-white/5 text-center space-y-1">
                     <div className="text-2xl font-black text-[#00dc93] font-mono">{res}</div>
                   </div>
@@ -200,19 +208,21 @@ export default async function CaseStudyPage({ params }: CaseStudyProps) {
           )}
 
           {/* Technical Implementation */}
-          <div className="p-8 rounded-3xl bg-[#141722] border border-white/10 space-y-6">
-            <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest">
-              Technologies &amp; Frameworks
-            </h3>
+          {safeServices.length > 0 && (
+            <div className="p-8 rounded-3xl bg-[#141722] border border-white/10 space-y-6">
+              <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest">
+                Technologies &amp; Frameworks
+              </h3>
 
-            <div className="flex flex-wrap gap-2">
-              {project.services.map((tech) => (
-                <span key={tech} className="px-3.5 py-1.5 rounded-xl bg-[#00dc93]/10 border border-[#00dc93]/30 text-[#00dc93] text-xs font-mono font-bold">
-                  {tech}
-                </span>
-              ))}
+              <div className="flex flex-wrap gap-2">
+                {safeServices.map((tech) => (
+                  <span key={tech} className="px-3.5 py-1.5 rounded-xl bg-[#00dc93]/10 border border-[#00dc93]/30 text-[#00dc93] text-xs font-mono font-bold">
+                    {tech}
+                  </span>
+                ))}
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Live Website Link */}
           {project.liveUrl && (
@@ -233,7 +243,7 @@ export default async function CaseStudyPage({ params }: CaseStudyProps) {
           <div className="p-10 rounded-3xl bg-gradient-to-br from-[#141722] to-[#181b26] border border-white/10 text-center space-y-4">
             <h3 className="text-2xl font-black text-white">Like what you see?</h3>
             <p className="text-xs text-slate-300 max-w-md mx-auto">
-              Let's discuss how eLab can design and engineer a similar solution for your business.
+              Let&apos;s discuss how eLab can design and engineer a similar solution for your business.
             </p>
             <div className="pt-2">
               <Link

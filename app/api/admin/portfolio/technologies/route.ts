@@ -43,9 +43,10 @@ export async function POST(req: NextRequest) {
     revalidatePath('/');
 
     return NextResponse.json({ success: true, technology: created });
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Failed to create technology.';
     return NextResponse.json(
-      { error: error.message || 'Failed to create technology.' },
+      { error: message },
       { status: 400 }
     );
   }

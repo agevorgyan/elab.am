@@ -147,7 +147,7 @@ export default function AdminDashboardPage() {
                   <span>Avetis</span>
                   <span>Today 10:15</span>
                 </div>
-                <div className="text-white font-bold">Published case study: Gayane's Kitchen</div>
+                <div className="text-white font-bold">Published case study: Gayane&apos;s Kitchen</div>
               </div>
 
               <div className="p-3 rounded-xl bg-white/5 border border-white/5 space-y-1">

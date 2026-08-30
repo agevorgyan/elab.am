@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAdminPermission } from '@/lib/auth';
-import { updateService, deleteService } from '@/lib/services';
+import { updateServiceAdmin, deleteServiceAdmin } from '@/lib/services';
 import prisma from '@/lib/prisma';
 import { revalidatePath } from 'next/cache';
 
@@ -15,7 +15,7 @@ export async function PUT(
 
   try {
     const body = await req.json();
-    const updated = await updateService(id, body);
+    const updated = await updateServiceAdmin(id, body);
 
     if (user) {
       await prisma.auditLog.create({
@@ -30,12 +30,13 @@ export async function PUT(
     }
 
     revalidatePath('/');
-    revalidatePath('/work');
+    revalidatePath('/admin/content');
 
     return NextResponse.json({ success: true, service: updated });
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Failed to update service.';
     return NextResponse.json(
-      { error: error.message || 'Failed to update service.' },
+      { error: message },
       { status: 400 }
     );
   }
@@ -51,7 +52,7 @@ export async function DELETE(
   const { id } = await params;
 
   try {
-    const deleted = await deleteService(id);
+    const deleted = await deleteServiceAdmin(id);
 
     if (user) {
       await prisma.auditLog.create({
@@ -66,12 +67,13 @@ export async function DELETE(
     }
 
     revalidatePath('/');
-    revalidatePath('/work');
+    revalidatePath('/admin/content');
 
     return NextResponse.json({ success: true });
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Failed to delete service.';
     return NextResponse.json(
-      { error: error.message || 'Failed to delete service.' },
+      { error: message },
       { status: 400 }
     );
   }

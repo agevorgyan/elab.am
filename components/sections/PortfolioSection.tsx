@@ -23,7 +23,7 @@ export const PortfolioSection: React.FC<PortfolioSectionProps> = ({ lang }) => {
     fetch('/api/portfolio')
       .then((res) => res.json())
       .then((data) => {
-        if (Array.isArray(data.projects) && data.projects.length > 0) {
+        if (data && Array.isArray(data.projects)) {
           setDbProjects(data.projects);
         }
       })
@@ -32,40 +32,49 @@ export const PortfolioSection: React.FC<PortfolioSectionProps> = ({ lang }) => {
     fetch('/api/portfolio/categories')
       .then((res) => res.json())
       .then((data) => {
-        if (Array.isArray(data.categories) && data.categories.length > 0) {
+        if (data && Array.isArray(data.categories)) {
           setDbCategories(data.categories);
         }
       })
       .catch(() => {});
   }, []);
 
-  // Map dbProjects or fallback to initial PORTFOLIO_PROJECTS
-  const allList: DbPortfolioProject[] = dbProjects.length > 0
+  // Map dbProjects or fallback to initial PORTFOLIO_PROJECTS with strict safety defaults
+  const rawList: DbPortfolioProject[] = (Array.isArray(dbProjects) && dbProjects.length > 0)
     ? dbProjects
-    : PORTFOLIO_PROJECTS.map((p) => ({
+    : (Array.isArray(PORTFOLIO_PROJECTS) ? PORTFOLIO_PROJECTS.map((p) => ({
         id: p.id,
         slug: p.slug,
-        title: p.title,
-        client: p.client,
-        category: p.category,
-        categoryLabel: p.categoryLabel[lang] || p.category,
-        summary: p.description[lang],
-        overview: p.overview[lang],
-        challenge: p.challenge[lang],
-        solution: p.solution[lang],
-        services: p.services,
-        results: p.results ? p.results.map((r) => `${r.value} ${r.label}`) : [],
-        year: String(p.year),
-        liveUrl: p.websiteUrl,
-        heroImage: p.coverImage,
-        featured: p.featured,
+        title: p.title || 'Untitled Project',
+        client: p.client || '',
+        category: p.category || 'corporate',
+        categoryLabel: (p.categoryLabel && (p.categoryLabel[lang] || p.categoryLabel.en)) || p.category || 'Corporate',
+        summary: (p.description && (p.description[lang] || p.description.en)) || '',
+        overview: (p.overview && (p.overview[lang] || p.overview.en)) || '',
+        challenge: (p.challenge && (p.challenge[lang] || p.challenge.en)) || '',
+        solution: (p.solution && (p.solution[lang] || p.solution.en)) || '',
+        services: p.services || p.technologies || [],
+        results: Array.isArray(p.results) ? p.results.map((r) => `${r.value} ${r.label}`) : [],
+        year: String(p.year || ''),
+        liveUrl: p.websiteUrl || null,
+        heroImage: p.coverImage || null,
+        featured: p.featured ?? false,
         published: true,
-        sortOrder: p.order,
-        gallery: p.gallery ? p.gallery.map((url) => ({ url })) : [],
-      }));
+        sortOrder: p.order ?? 0,
+        gallery: Array.isArray(p.gallery) ? p.gallery.map((url) => ({ url })) : [],
+      })) : []);
+
+  // Normalize list elements to guarantee array fields are never null/undefined
+  const safeAllList: DbPortfolioProject[] = (rawList ?? []).map((p) => ({
+    ...p,
+    title: p?.title || 'Untitled Project',
+    services: Array.isArray(p?.services) ? p.services : [],
+    results: Array.isArray(p?.results) ? p.results : [],
+    gallery: Array.isArray(p?.gallery) ? p.gallery : [],
+  }));
 
   // Categories list from database or default
-  const categoriesList = dbCategories.length > 0
+  const categoriesList = (Array.isArray(dbCategories) && dbCategories.length > 0)
     ? dbCategories.map((c) => ({ id: c.slug, label: c.name }))
     : [
         { id: 'all', label: t.all },
@@ -76,11 +85,11 @@ export const PortfolioSection: React.FC<PortfolioSectionProps> = ({ lang }) => {
       ];
 
   const filteredProjects = activeCategory === 'all'
-    ? allList
-    : allList.filter((p) => p.category === activeCategory);
+    ? safeAllList
+    : safeAllList.filter((p) => p && p.category === activeCategory);
 
-  const featuredProject = filteredProjects.find((p) => p.featured) || filteredProjects[0];
-  const gridProjects = filteredProjects.filter((p) => p.id !== featuredProject?.id);
+  const featuredProject = filteredProjects.find((p) => p?.featured) || filteredProjects[0];
+  const gridProjects = filteredProjects.filter((p) => p && p.id !== featuredProject?.id);
 
   return (
     <section id="portfolio" className="py-24 bg-[#090a0f] relative">
@@ -101,21 +110,34 @@ export const PortfolioSection: React.FC<PortfolioSectionProps> = ({ lang }) => {
         </div>
 
         {/* Dynamic Database Category Filter Tabs */}
-        <div className="flex flex-wrap items-center justify-center gap-2 mb-12">
-          {categoriesList.map((cat) => (
-            <button
-              key={cat.id}
-              onClick={() => setActiveCategory(cat.id)}
-              className={`px-5 py-2.5 rounded-full text-xs font-bold transition-all duration-200 ${
-                activeCategory === cat.id
-                  ? 'bg-[#00dc93] text-black shadow-lg shadow-[#00dc93]/20 scale-105'
-                  : 'bg-[#141722] text-slate-300 hover:bg-white/10 border border-white/5'
-              }`}
-            >
-              {cat.label}
-            </button>
-          ))}
-        </div>
+        {(categoriesList ?? []).length > 0 && (
+          <div className="flex flex-wrap items-center justify-center gap-2 mb-12">
+            {categoriesList.map((cat) => (
+              <button
+                key={cat.id}
+                onClick={() => setActiveCategory(cat.id)}
+                className={`px-5 py-2.5 rounded-full text-xs font-bold transition-all duration-200 ${
+                  activeCategory === cat.id
+                    ? 'bg-[#00dc93] text-black shadow-lg shadow-[#00dc93]/20 scale-105'
+                    : 'bg-[#141722] text-slate-300 hover:bg-white/10 border border-white/5'
+                }`}
+              >
+                {cat.label}
+              </button>
+            ))}
+          </div>
+        )}
+
+        {/* Zero Projects Fallback State (Case 4 & Case 5) */}
+        {filteredProjects.length === 0 && (
+          <div className="text-center py-16 rounded-3xl bg-[#141722] border border-white/10 space-y-3 my-8">
+            <Layers className="w-10 h-10 text-slate-600 mx-auto" />
+            <h3 className="text-base font-bold text-white">No Portfolio Projects Found</h3>
+            <p className="text-xs text-slate-400 max-w-sm mx-auto">
+              There are currently no active case studies in this category. Check back soon for new work.
+            </p>
+          </div>
+        )}
 
         {/* FEATURED HERO PROJECT */}
         {featuredProject && (
@@ -126,7 +148,7 @@ export const PortfolioSection: React.FC<PortfolioSectionProps> = ({ lang }) => {
             <div className="lg:col-span-7 relative h-72 lg:h-[420px] overflow-hidden bg-slate-900">
               <img
                 src={featuredProject.heroImage || ''}
-                alt={featuredProject.title}
+                alt={featuredProject.title || 'Featured Case Study'}
                 className="w-full h-full object-cover object-top transition-transform duration-700 group-hover:scale-105"
               />
               <div className="absolute top-4 left-4">
@@ -141,29 +163,34 @@ export const PortfolioSection: React.FC<PortfolioSectionProps> = ({ lang }) => {
               <div className="space-y-4">
                 <div className="flex items-center justify-between text-xs">
                   <span className="px-3 py-1 rounded-full bg-white/5 text-[#00dc93] font-bold border border-white/10">
-                    {featuredProject.categoryLabel || featuredProject.category}
+                    {featuredProject.categoryLabel || featuredProject.category || 'Corporate'}
                   </span>
-                  <span className="font-mono text-slate-500 font-bold">{featuredProject.year}</span>
+                  <span className="font-mono text-slate-500 font-bold">{featuredProject.year || ''}</span>
                 </div>
 
                 <h3 className="text-2xl sm:text-3xl font-black text-white group-hover:text-[#00dc93] transition-colors leading-tight">
                   {featuredProject.title}
                 </h3>
 
-                <p className="text-xs text-slate-300 leading-relaxed line-clamp-3">
-                  {featuredProject.summary}
-                </p>
+                {featuredProject.summary && (
+                  <p className="text-xs text-slate-300 leading-relaxed line-clamp-3">
+                    {featuredProject.summary}
+                  </p>
+                )}
 
-                <div className="flex flex-wrap gap-2 pt-2">
-                  {featuredProject.services.map((tech) => (
-                    <span
-                      key={tech}
-                      className="px-2.5 py-1 rounded bg-white/5 text-[11px] font-mono text-slate-300 border border-white/5"
-                    >
-                      {tech}
-                    </span>
-                  ))}
-                </div>
+                {/* Safe Services Rendering (Case 2 & Case 3) */}
+                {(featuredProject.services ?? []).length > 0 && (
+                  <div className="flex flex-wrap gap-2 pt-2">
+                    {(featuredProject.services ?? []).map((tech) => (
+                      <span
+                        key={tech}
+                        className="px-2.5 py-1 rounded bg-white/5 text-[11px] font-mono text-slate-300 border border-white/5"
+                      >
+                        {tech}
+                      </span>
+                    ))}
+                  </div>
+                )}
               </div>
 
               <div className="pt-4 border-t border-white/5 flex items-center justify-between text-xs font-bold text-[#00dc93]">
@@ -177,61 +204,68 @@ export const PortfolioSection: React.FC<PortfolioSectionProps> = ({ lang }) => {
         )}
 
         {/* EDITORIAL GRID */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {gridProjects.map((project) => (
-            <div
-              key={project.id}
-              onClick={() => setSelectedProject(project)}
-              className="group cursor-pointer rounded-2xl bg-[#141722] border border-white/10 overflow-hidden hover:border-[#00dc93]/50 transition-all duration-300 hover:-translate-y-1.5 shadow-xl hover:shadow-2xl hover:shadow-[#00dc93]/10 flex flex-col justify-between"
-            >
-              <div className="relative h-60 overflow-hidden bg-slate-900">
-                <img
-                  src={project.heroImage || ''}
-                  alt={project.title}
-                  className="w-full h-full object-cover object-top transition-transform duration-700 group-hover:scale-105"
-                  loading="lazy"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-[#141722] via-transparent to-transparent opacity-80" />
+        {gridProjects.length > 0 && (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {gridProjects.map((project) => (
+              <div
+                key={project.id}
+                onClick={() => setSelectedProject(project)}
+                className="group cursor-pointer rounded-2xl bg-[#141722] border border-white/10 overflow-hidden hover:border-[#00dc93]/50 transition-all duration-300 hover:-translate-y-1.5 shadow-xl hover:shadow-2xl hover:shadow-[#00dc93]/10 flex flex-col justify-between"
+              >
+                <div className="relative h-60 overflow-hidden bg-slate-900">
+                  <img
+                    src={project.heroImage || ''}
+                    alt={project.title || 'Project Showcase'}
+                    className="w-full h-full object-cover object-top transition-transform duration-700 group-hover:scale-105"
+                    loading="lazy"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-[#141722] via-transparent to-transparent opacity-80" />
 
-                <div className="absolute top-4 left-4">
-                  <span className="px-3 py-1 rounded-full bg-[#0b0c10]/80 backdrop-blur-md text-[11px] font-bold text-[#00dc93] border border-white/10">
-                    {project.categoryLabel || project.category}
-                  </span>
-                </div>
-
-                <div className="absolute bottom-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                  <span className="w-10 h-10 rounded-full bg-[#00dc93] text-black flex items-center justify-center shadow-lg">
-                    <ArrowUpRight className="w-5 h-5 font-bold" />
-                  </span>
-                </div>
-              </div>
-
-              <div className="p-6 space-y-3">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-lg font-extrabold text-white group-hover:text-[#00dc93] transition-colors">
-                    {project.title}
-                  </h3>
-                  <span className="text-xs font-mono text-slate-500">{project.year}</span>
-                </div>
-
-                <p className="text-xs text-slate-400 line-clamp-2 leading-relaxed">
-                  {project.summary}
-                </p>
-
-                <div className="flex flex-wrap gap-1.5 pt-2 border-t border-white/5">
-                  {project.services.map((tech) => (
-                    <span
-                      key={tech}
-                      className="px-2 py-0.5 rounded bg-white/5 text-[10px] font-mono text-slate-300 border border-white/5"
-                    >
-                      {tech}
+                  <div className="absolute top-4 left-4">
+                    <span className="px-3 py-1 rounded-full bg-[#0b0c10]/80 backdrop-blur-md text-[11px] font-bold text-[#00dc93] border border-white/10">
+                      {project.categoryLabel || project.category || 'Corporate'}
                     </span>
-                  ))}
+                  </div>
+
+                  <div className="absolute bottom-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                    <span className="w-10 h-10 rounded-full bg-[#00dc93] text-black flex items-center justify-center shadow-lg">
+                      <ArrowUpRight className="w-5 h-5 font-bold" />
+                    </span>
+                  </div>
+                </div>
+
+                <div className="p-6 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-lg font-extrabold text-white group-hover:text-[#00dc93] transition-colors">
+                      {project.title}
+                    </h3>
+                    <span className="text-xs font-mono text-slate-500">{project.year || ''}</span>
+                  </div>
+
+                  {project.summary && (
+                    <p className="text-xs text-slate-400 line-clamp-2 leading-relaxed">
+                      {project.summary}
+                    </p>
+                  )}
+
+                  {/* Safe Grid Services Rendering */}
+                  {(project.services ?? []).length > 0 && (
+                    <div className="flex flex-wrap gap-1.5 pt-2 border-t border-white/5">
+                      {(project.services ?? []).map((tech) => (
+                        <span
+                          key={tech}
+                          className="px-2 py-0.5 rounded bg-white/5 text-[10px] font-mono text-slate-300 border border-white/5"
+                        >
+                          {tech}
+                        </span>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
 
         {/* View All Work Link */}
         <div className="text-center pt-12">
@@ -254,7 +288,7 @@ export const PortfolioSection: React.FC<PortfolioSectionProps> = ({ lang }) => {
             <div className="flex items-center justify-between border-b border-white/10 pb-4">
               <div>
                 <span className="text-xs font-bold text-[#00dc93] uppercase tracking-wider">
-                  {selectedProject.categoryLabel || selectedProject.category}
+                  {selectedProject.categoryLabel || selectedProject.category || 'Corporate'}
                 </span>
                 <h3 className="text-2xl sm:text-3xl font-black text-white mt-0.5">
                   {selectedProject.title}
@@ -268,26 +302,28 @@ export const PortfolioSection: React.FC<PortfolioSectionProps> = ({ lang }) => {
               </button>
             </div>
 
-            <div className="rounded-2xl overflow-hidden border border-white/10 max-h-80">
-              <img
-                src={selectedProject.heroImage || ''}
-                alt={selectedProject.title}
-                className="w-full h-full object-cover object-top"
-              />
-            </div>
+            {selectedProject.heroImage && (
+              <div className="rounded-2xl overflow-hidden border border-white/10 max-h-80">
+                <img
+                  src={selectedProject.heroImage}
+                  alt={selectedProject.title || 'Case Study Modal'}
+                  className="w-full h-full object-cover object-top"
+                />
+              </div>
+            )}
 
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 p-4 rounded-xl bg-white/5 border border-white/5 text-xs">
               <div>
                 <div className="text-slate-400 font-medium">{t.modal.client}</div>
-                <div className="text-white font-bold mt-0.5">{selectedProject.client}</div>
+                <div className="text-white font-bold mt-0.5">{selectedProject.client || 'N/A'}</div>
               </div>
               <div>
                 <div className="text-slate-400 font-medium">{t.modal.year}</div>
-                <div className="text-white font-bold mt-0.5">{selectedProject.year}</div>
+                <div className="text-white font-bold mt-0.5">{selectedProject.year || 'N/A'}</div>
               </div>
               <div>
                 <div className="text-slate-400 font-medium">{t.modal.category}</div>
-                <div className="text-white font-bold mt-0.5">{selectedProject.categoryLabel || selectedProject.category}</div>
+                <div className="text-white font-bold mt-0.5">{selectedProject.categoryLabel || selectedProject.category || 'Corporate'}</div>
               </div>
               <div>
                 <div className="text-slate-400 font-medium">Market</div>
@@ -296,19 +332,38 @@ export const PortfolioSection: React.FC<PortfolioSectionProps> = ({ lang }) => {
             </div>
 
             <div className="space-y-4 text-sm leading-relaxed">
-              <div className="p-4 rounded-xl bg-[#0b0c10] border border-white/5 space-y-1.5">
-                <h4 className="text-xs font-bold uppercase text-red-400 tracking-wider">
-                  {t.modal.challenge}
-                </h4>
-                <p className="text-slate-300">{selectedProject.challenge}</p>
-              </div>
+              {selectedProject.challenge && (
+                <div className="p-4 rounded-xl bg-[#0b0c10] border border-white/5 space-y-1.5">
+                  <h4 className="text-xs font-bold uppercase text-red-400 tracking-wider">
+                    {t.modal.challenge}
+                  </h4>
+                  <p className="text-slate-300">{selectedProject.challenge}</p>
+                </div>
+              )}
 
-              <div className="p-4 rounded-xl bg-[#0b0c10] border border-white/5 space-y-1.5">
-                <h4 className="text-xs font-bold uppercase text-[#00dc93] tracking-wider">
-                  {t.modal.solution}
-                </h4>
-                <p className="text-slate-300">{selectedProject.solution}</p>
-              </div>
+              {selectedProject.solution && (
+                <div className="p-4 rounded-xl bg-[#0b0c10] border border-white/5 space-y-1.5">
+                  <h4 className="text-xs font-bold uppercase text-[#00dc93] tracking-wider">
+                    {t.modal.solution}
+                  </h4>
+                  <p className="text-slate-300">{selectedProject.solution}</p>
+                </div>
+              )}
+
+              {(selectedProject.services ?? []).length > 0 && (
+                <div className="p-4 rounded-xl bg-[#0b0c10] border border-white/5 space-y-2">
+                  <h4 className="text-xs font-bold uppercase text-slate-400 tracking-wider">
+                    Services &amp; Technologies
+                  </h4>
+                  <div className="flex flex-wrap gap-2">
+                    {(selectedProject.services ?? []).map((tech) => (
+                      <span key={tech} className="px-2.5 py-1 rounded bg-white/5 text-[11px] font-mono text-[#00dc93] border border-white/5">
+                        {tech}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
 
             <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-4 border-t border-white/10">

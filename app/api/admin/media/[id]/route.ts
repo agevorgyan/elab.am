@@ -7,7 +7,7 @@ export async function PUT(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const { user, errorResponse } = await requireAdminPermission('manage_media');
+  const { errorResponse } = await requireAdminPermission('manage_media');
   if (errorResponse) return errorResponse;
 
   const { id } = await params;
@@ -36,9 +36,10 @@ export async function PUT(
       const updatedMedia = await updateMediaAltText(id, body.alt || '');
       return NextResponse.json({ success: true, media: updatedMedia });
     }
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Failed to update media.';
     return NextResponse.json(
-      { error: error.message || 'Failed to update media.' },
+      { error: message },
       { status: 400 }
     );
   }
@@ -69,9 +70,10 @@ export async function DELETE(
     }
 
     return NextResponse.json({ success: true });
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Failed to delete media.';
     return NextResponse.json(
-      { error: error.message || 'Failed to delete media.' },
+      { error: message },
       { status: 400 }
     );
   }

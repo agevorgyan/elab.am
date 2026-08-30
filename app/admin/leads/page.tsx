@@ -76,9 +76,54 @@ export default function AdminLeadsPage() {
     { key: 'LOST', label: 'Lost' },
   ];
 
-  const fetchLeads = useCallback(async () => {
-    setLoading(true);
-    setErrorMsg(null);
+  useEffect(() => {
+    let active = true;
+    const params = new URLSearchParams({
+      page: String(page),
+      limit: '10',
+      search: searchTerm,
+      status: statusFilter,
+      sortBy,
+      sortOrder,
+    });
+
+    fetch(`/api/admin/leads?${params.toString()}`)
+      .then((res) => res.json())
+      .then((data) => {
+        if (active && Array.isArray(data.leads)) {
+          setLeads(data.leads);
+          setTotalPages(data.totalPages || 1);
+          setTotalItems(data.total || 0);
+
+          setSelectedLead((prev) => {
+            if (prev) {
+              const fresh = data.leads.find((l: LeadItem) => l.id === prev.id);
+              if (fresh) {
+                setAssignName(fresh.assignedTo || '');
+                return fresh;
+              }
+            }
+            if (data.leads.length > 0) {
+              setAssignName(data.leads[0].assignedTo || '');
+              return data.leads[0];
+            }
+            return null;
+          });
+        }
+      })
+      .catch(() => {
+        if (active) setErrorMsg('Failed to fetch CRM leads.');
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [page, searchTerm, statusFilter, sortBy, sortOrder]);
+
+  const fetchLeads = async () => {
     try {
       const params = new URLSearchParams({
         page: String(page),
@@ -96,30 +141,13 @@ export default function AdminLeadsPage() {
         setLeads(data.leads);
         setTotalPages(data.totalPages || 1);
         setTotalItems(data.total || 0);
-
-        if (selectedLead) {
-          const fresh = data.leads.find((l: LeadItem) => l.id === selectedLead.id);
-          if (fresh) {
-            setSelectedLead(fresh);
-            setAssignName(fresh.assignedTo || '');
-          }
-        } else if (data.leads.length > 0) {
-          setSelectedLead(data.leads[0]);
-          setAssignName(data.leads[0].assignedTo || '');
-        }
-      } else {
-        setErrorMsg(data.error || 'Failed to fetch CRM leads.');
       }
     } catch {
-      setErrorMsg('Failed to connect to CRM API.');
+      setErrorMsg('Failed to fetch CRM leads.');
     } finally {
       setLoading(false);
     }
-  }, [page, searchTerm, statusFilter, sortBy, sortOrder]);
-
-  useEffect(() => {
-    fetchLeads();
-  }, [fetchLeads]);
+  };
 
   const handleStatusChange = async (leadId: string, newStatus: LeadItem['status']) => {
     setErrorMsg(null);
@@ -478,7 +506,7 @@ export default function AdminLeadsPage() {
               </div>
               <div className="pt-2 border-t border-white/5 text-slate-300">
                 <span className="text-slate-500 font-bold block mb-1">Message:</span>
-                "{selectedLead.message}"
+                &quot;{selectedLead.message}&quot;
               </div>
             </div>
 

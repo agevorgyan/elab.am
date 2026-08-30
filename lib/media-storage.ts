@@ -1,6 +1,7 @@
 import fs from 'fs/promises';
 import path from 'path';
 import prisma from '@/lib/prisma';
+import { Prisma } from '@prisma/client';
 
 export const ALLOWED_MIME_TYPES = [
   'image/jpeg',
@@ -143,7 +144,7 @@ export async function getPaginatedMediaAdmin(
   mimeFilter = 'all'
 ): Promise<{ media: MediaRecord[]; total: number; totalPages: number; page: number }> {
   try {
-    const where: any = {};
+    const where: Prisma.MediaWhereInput = {};
 
     if (search.trim()) {
       where.OR = [

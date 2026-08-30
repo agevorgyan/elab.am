@@ -52,9 +52,10 @@ export async function POST(req: NextRequest) {
     revalidatePath('/');
 
     return NextResponse.json({ success: true, category: created });
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Failed to create category.';
     return NextResponse.json(
-      { error: error.message || 'Failed to create category.' },
+      { error: message },
       { status: 400 }
     );
   }

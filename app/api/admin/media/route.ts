@@ -50,9 +50,10 @@ export async function POST(req: NextRequest) {
     }
 
     return NextResponse.json({ success: true, media });
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Media upload failed.';
     return NextResponse.json(
-      { error: error.message || 'Media upload failed.' },
+      { error: message },
       { status: 400 }
     );
   }

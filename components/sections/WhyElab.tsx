@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { Language, TRANSLATIONS } from '@/lib/translations';
-import { ShieldCheck, Zap, Sparkles, Code2, Lock, Headphones, Trophy, CheckCircle2 } from 'lucide-react';
+import { ShieldCheck, Zap, Sparkles, Code2, Lock, Headphones, Trophy } from 'lucide-react';
 
 interface WhyElabProps {
   lang: Language;

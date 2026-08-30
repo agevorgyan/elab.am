@@ -52,9 +52,38 @@ export default function AdminMediaPage() {
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
 
-  const fetchMedia = useCallback(async () => {
-    setLoading(true);
-    setErrorMsg(null);
+  useEffect(() => {
+    let active = true;
+
+    const params = new URLSearchParams({
+      page: String(page),
+      limit: '12',
+      search: searchQuery,
+      filter: mimeFilter,
+    });
+
+    fetch(`/api/admin/media?${params.toString()}`)
+      .then((res) => res.json())
+      .then((data) => {
+        if (active && Array.isArray(data.media)) {
+          setMediaList(data.media);
+          setTotalPages(data.totalPages || 1);
+          setTotalItems(data.total || 0);
+        }
+      })
+      .catch(() => {
+        if (active) setErrorMsg('Failed to load media assets.');
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [page, searchQuery, mimeFilter]);
+
+  const fetchMedia = async () => {
     try {
       const params = new URLSearchParams({
         page: String(page),
@@ -65,24 +94,18 @@ export default function AdminMediaPage() {
 
       const res = await fetch(`/api/admin/media?${params.toString()}`);
       const data = await res.json();
-      
+
       if (res.ok && Array.isArray(data.media)) {
         setMediaList(data.media);
         setTotalPages(data.totalPages || 1);
         setTotalItems(data.total || 0);
-      } else {
-        setErrorMsg(data.error || 'Failed to load media assets.');
       }
     } catch {
-      setErrorMsg('Failed to connect to media API.');
+      setErrorMsg('Failed to load media assets.');
     } finally {
       setLoading(false);
     }
-  }, [page, searchQuery, mimeFilter]);
-
-  useEffect(() => {
-    fetchMedia();
-  }, [fetchMedia]);
+  };
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -391,7 +414,7 @@ export default function AdminMediaPage() {
 
               <div className="space-y-1.5 text-xs">
                 <div className="font-extrabold text-white truncate">{item.name}</div>
-                {item.alt && <div className="text-[11px] text-slate-400 italic truncate">Alt: "{item.alt}"</div>}
+                {item.alt && <div className="text-[11px] text-slate-400 italic truncate">Alt: &quot;{item.alt}&quot;</div>}
                 
                 <div className="flex items-center justify-between text-[11px] text-slate-500 font-mono pt-1 border-t border-white/5">
                   <span className="uppercase">{item.mimeType.replace('image/', '')}</span>
@@ -459,7 +482,7 @@ export default function AdminMediaPage() {
               <div className="space-y-0.5 text-slate-400">
                 <div>MIME: <span className="text-white font-mono">{previewItem.mimeType}</span></div>
                 <div>Size: <span className="text-white font-mono">{formatSize(previewItem.sizeBytes)}</span></div>
-                {previewItem.alt && <div>Alt: <span className="text-[#00dc93]">"{previewItem.alt}"</span></div>}
+                {previewItem.alt && <div>Alt: <span className="text-[#00dc93]">&quot;{previewItem.alt}&quot;</span></div>}
               </div>
 
               <button

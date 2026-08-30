@@ -219,3 +219,8 @@ export async function reorderServices(orderedIds: string[]) {
     });
   }
 }
+
+export const createServiceAdmin = createService;
+export const updateServiceAdmin = updateService;
+export const deleteServiceAdmin = deleteService;
+export const reorderServicesAdmin = reorderServices;

@@ -70,9 +70,10 @@ export async function PUT(
     }
 
     return NextResponse.json({ success: true, lead: updatedLead });
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Failed to update lead.';
     return NextResponse.json(
-      { error: error.message || 'Failed to update lead.' },
+      { error: message },
       { status: 400 }
     );
   }
@@ -103,9 +104,10 @@ export async function DELETE(
     }
 
     return NextResponse.json({ success: true });
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Failed to delete lead.';
     return NextResponse.json(
-      { error: error.message || 'Failed to delete lead.' },
+      { error: message },
       { status: 400 }
     );
   }

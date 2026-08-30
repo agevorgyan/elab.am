@@ -28,7 +28,7 @@ export default function NotFound() {
         <div className="space-y-2">
           <h2 className="text-2xl font-bold text-white">Looking for something?</h2>
           <p className="text-sm text-slate-400 max-w-md mx-auto leading-relaxed">
-            The page you are trying to reach does not exist or has been moved. Let's get you back on track to explore eLab's digital solutions.
+            The page you are trying to reach does not exist or has been moved. Let&apos;s get you back on track to explore eLab&apos;s digital solutions.
           </p>
         </div>
 
