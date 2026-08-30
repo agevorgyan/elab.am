@@ -67,11 +67,40 @@ export default function AdminSettingsPage() {
     }
   };
 
-  const handlePasswordChange = (e: React.FormEvent) => {
+  const handlePasswordChange = async (e: React.FormEvent) => {
     e.preventDefault();
-    setPasswordSaved(true);
-    setPasswordState({ currentPassword: '', newPassword: '', confirmPassword: '' });
-    setTimeout(() => setPasswordSaved(false), 3000);
+    setPasswordSaved(false);
+    setErrorMsg('');
+
+    if (!passwordState.currentPassword || !passwordState.newPassword || !passwordState.confirmPassword) {
+      setErrorMsg('All password fields are required.');
+      return;
+    }
+
+    if (passwordState.newPassword !== passwordState.confirmPassword) {
+      setErrorMsg('New password and confirmation do not match.');
+      return;
+    }
+
+    try {
+      const res = await fetch('/api/admin/password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(passwordState),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok || !data.success) {
+        setErrorMsg(data.error || 'Failed to change password.');
+      } else {
+        setPasswordSaved(true);
+        setPasswordState({ currentPassword: '', newPassword: '', confirmPassword: '' });
+        setTimeout(() => setPasswordSaved(false), 3500);
+      }
+    } catch {
+      setErrorMsg('Network error while updating password.');
+    }
   };
 
   return (

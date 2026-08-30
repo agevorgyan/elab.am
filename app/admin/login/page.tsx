@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, Suspense } from 'react';
+import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { BrandLogo } from '@/components/ui/BrandLogo';
 import { getSafeRedirectUrl } from '@/lib/redirect';
@@ -97,13 +98,12 @@ function AdminLoginForm() {
         <div className="space-y-1.5 text-xs">
           <div className="flex items-center justify-between">
             <label className="font-bold text-slate-300 uppercase tracking-wider">Password</label>
-            <button
-              type="button"
-              onClick={() => setForgotModal(true)}
-              className="text-[11px] text-[#00dc93] hover:underline"
+            <Link
+              href="/admin/forgot-password"
+              className="text-[11px] text-[#00dc93] hover:underline font-bold"
             >
               Forgot password?
-            </button>
+            </Link>
           </div>
           <div className="relative">
             <Lock className="w-4 h-4 text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
