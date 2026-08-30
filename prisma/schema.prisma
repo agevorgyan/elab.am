@@ -212,6 +212,11 @@ model Service {
   slug           String           @unique
   title          String
   priceAmd       String
+  priceCurrency  String           @default("AMD")
+  showPrice      Boolean          @default(true)
+  priceLabel     String?          @default("Starting from")
+  popular        Boolean          @default(false)
+  tagline        String?
   description    String
   icon           String?
   ctaText        String?          @default("Order Service →")

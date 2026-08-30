@@ -5,6 +5,11 @@ export interface ServiceItem {
   slug: string;
   title: string;
   priceAmd: string;
+  priceCurrency: string;
+  showPrice: boolean;
+  priceLabel?: string | null;
+  popular?: boolean;
+  tagline?: string | null;
   description: string;
   icon?: string | null;
   ctaText?: string | null;
@@ -37,6 +42,11 @@ export async function getPublishedServices(): Promise<ServiceItem[]> {
       slug: s.slug,
       title: s.title,
       priceAmd: s.priceAmd,
+      priceCurrency: s.priceCurrency || 'AMD',
+      showPrice: s.showPrice ?? true,
+      priceLabel: s.priceLabel || 'Starting from',
+      popular: s.popular ?? false,
+      tagline: s.tagline || s.description,
       description: s.description,
       icon: s.icon,
       ctaText: s.ctaText,
@@ -72,6 +82,11 @@ export async function getAllServicesAdmin(): Promise<ServiceItem[]> {
       slug: s.slug,
       title: s.title,
       priceAmd: s.priceAmd,
+      priceCurrency: s.priceCurrency || 'AMD',
+      showPrice: s.showPrice ?? true,
+      priceLabel: s.priceLabel || 'Starting from',
+      popular: s.popular ?? false,
+      tagline: s.tagline || s.description,
       description: s.description,
       icon: s.icon,
       ctaText: s.ctaText,
@@ -110,6 +125,11 @@ export async function createService(data: Partial<ServiceItem>) {
       title: data.title.trim(),
       slug: normalizedSlug,
       priceAmd: data.priceAmd.trim(),
+      priceCurrency: data.priceCurrency || 'AMD',
+      showPrice: data.showPrice ?? true,
+      priceLabel: data.priceLabel || 'Starting from',
+      popular: data.popular ?? false,
+      tagline: data.tagline || data.description.trim(),
       description: data.description.trim(),
       icon: data.icon || 'Zap',
       ctaText: data.ctaText || 'Order Service →',
@@ -146,7 +166,6 @@ export async function updateService(id: string, data: Partial<ServiceItem>) {
     data.slug = normalizedSlug;
   }
 
-  // Delete existing features and recreate if features array provided
   if (data.features) {
     await prisma.serviceFeature.deleteMany({ where: { serviceId: id } });
   }
@@ -157,6 +176,11 @@ export async function updateService(id: string, data: Partial<ServiceItem>) {
       ...(data.title && { title: data.title.trim() }),
       ...(data.slug && { slug: data.slug }),
       ...(data.priceAmd && { priceAmd: data.priceAmd.trim() }),
+      ...(data.priceCurrency !== undefined && { priceCurrency: data.priceCurrency }),
+      ...(data.showPrice !== undefined && { showPrice: data.showPrice }),
+      ...(data.priceLabel !== undefined && { priceLabel: data.priceLabel }),
+      ...(data.popular !== undefined && { popular: data.popular }),
+      ...(data.tagline !== undefined && { tagline: data.tagline }),
       ...(data.description && { description: data.description.trim() }),
       ...(data.icon !== undefined && { icon: data.icon }),
       ...(data.ctaText !== undefined && { ctaText: data.ctaText }),

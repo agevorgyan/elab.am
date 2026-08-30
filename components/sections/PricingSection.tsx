@@ -1,8 +1,9 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Language, TRANSLATIONS } from '@/lib/translations';
-import { Check, Zap, Sparkles, CreditCard } from 'lucide-react';
+import { ServiceItem } from '@/lib/services';
+import { Check, Sparkles, CreditCard } from 'lucide-react';
 
 interface PricingSectionProps {
   lang: Language;
@@ -10,84 +11,30 @@ interface PricingSectionProps {
 
 export const PricingSection: React.FC<PricingSectionProps> = ({ lang }) => {
   const t = TRANSLATIONS[lang].pricing;
+  const [dbServices, setDbServices] = useState<ServiceItem[]>([]);
 
-  const plans = [
-    {
-      id: 'business-card',
-      title: 'Business Card Website',
-      price: '150,000 AMD',
-      tagline: 'Compact high-trust web presence for small business',
-      features: [
-        'Up to 3 custom pages',
-        'Mobile-first responsive design',
-        'Contact form & Call button',
-        'Social media integration',
-        'Basic Technical SEO setup',
-        'Fast 5-day delivery',
-      ],
-      popular: false,
-    },
-    {
-      id: 'landing-page',
-      title: 'Landing Page',
-      price: '190,000 AMD',
-      tagline: 'High-converting single page designed around your sales goal',
-      features: [
-        'Conversion-focused architecture (CRO)',
-        'Bespoke UX/UI visual storytelling',
-        'Lead capture form & WhatsApp CTA',
-        'Google Analytics & Pixel setup',
-        'Sub-second page load optimization',
-        '100% Mobile responsive',
-      ],
-      popular: true,
-    },
-    {
-      id: 'corporate-website',
-      title: 'Corporate Website',
-      price: '290,000 AMD',
-      tagline: 'Enterprise-grade portal built around your brand identity',
-      features: [
-        'Multi-page custom structure',
-        'Multilingual architecture (HY/EN/RU)',
-        'Intuitive Admin CMS control',
-        'Service & portfolio showcases',
-        'Advanced Schema.org SEO markup',
-        '1 Year free technical maintenance',
-      ],
-      popular: false,
-    },
-    {
-      id: 'online-store',
-      title: 'Online Store (E-Commerce)',
-      price: '350,000 AMD',
-      tagline: 'Scalable e-commerce store with integrated online payment',
-      features: [
-        'Unlimited product catalog',
-        'ArCa / Visa / MasterCard / Stripe',
-        'Cart & online checkout funnel',
-        '1C / Inventory ERP synchronization',
-        'Automated order email alerts',
-        'Discount coupon system',
-      ],
-      popular: false,
-    },
-    {
-      id: 'news-website',
-      title: 'News & Media Website',
-      price: '450,000 AMD',
-      tagline: 'High-concurrency media portal built for news publishing',
-      features: [
-        'High-traffic caching architecture',
-        'Real-time editor publishing tools',
-        'Banner & ad space management',
-        'Google News Schema integration',
-        'Social sharing & viral widgets',
-        'Dedicated server setup',
-      ],
-      popular: false,
-    },
-  ];
+  useEffect(() => {
+    fetch('/api/services')
+      .then((res) => res.json())
+      .then((data) => {
+        if (Array.isArray(data.services) && data.services.length > 0) {
+          setDbServices(data.services);
+        }
+      })
+      .catch(() => {});
+  }, []);
+
+  // Format pricing string dynamically based on showPrice and priceCurrency
+  const formatPriceDisplay = (service: ServiceItem) => {
+    if (!service.showPrice) {
+      return 'Custom Quote';
+    }
+    const val = service.priceAmd || '';
+    if (val.includes(service.priceCurrency)) {
+      return val;
+    }
+    return `${val} ${service.priceCurrency}`;
+  };
 
   return (
     <section id="pricing" className="py-24 bg-[#0b0c10] relative">
@@ -109,7 +56,7 @@ export const PricingSection: React.FC<PricingSectionProps> = ({ lang }) => {
 
         {/* Pricing Cards Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {plans.map((plan) => (
+          {dbServices.map((plan) => (
             <div
               key={plan.id}
               className={`relative p-8 rounded-3xl bg-[#141722] border transition-all duration-300 flex flex-col justify-between hover:-translate-y-1.5 shadow-xl ${
@@ -127,23 +74,23 @@ export const PricingSection: React.FC<PricingSectionProps> = ({ lang }) => {
               <div className="space-y-6">
                 <div>
                   <h3 className="text-xl font-black text-white">{plan.title}</h3>
-                  <p className="text-xs text-slate-400 mt-1 min-h-[32px]">{plan.tagline}</p>
+                  <p className="text-xs text-slate-400 mt-1 min-h-[32px]">{plan.tagline || plan.description}</p>
                 </div>
 
                 <div className="p-4 rounded-2xl bg-white/5 border border-white/5 text-center">
                   <span className="text-[10px] text-slate-400 font-medium block uppercase">
-                    {t.from}
+                    {plan.priceLabel || t.from}
                   </span>
                   <span className="text-2xl font-black text-[#00dc93] font-mono">
-                    {plan.price}
+                    {formatPriceDisplay(plan)}
                   </span>
                 </div>
 
                 <div className="space-y-2.5 pt-2 border-t border-white/5">
                   {plan.features.map((feature) => (
-                    <div key={feature} className="flex items-center gap-2.5 text-xs text-slate-300">
+                    <div key={feature.text} className="flex items-center gap-2.5 text-xs text-slate-300">
                       <Check className="w-4 h-4 text-[#00dc93] shrink-0" />
-                      <span>{feature}</span>
+                      <span>{feature.text}</span>
                     </div>
                   ))}
                 </div>
@@ -158,7 +105,7 @@ export const PricingSection: React.FC<PricingSectionProps> = ({ lang }) => {
                       : 'bg-white/5 hover:bg-white/10 text-white border border-white/10'
                   }`}
                 >
-                  <span>{t.getEstimate}</span>
+                  <span>{plan.ctaText || t.getEstimate}</span>
                 </a>
               </div>
             </div>
@@ -193,7 +140,7 @@ export const PricingSection: React.FC<PricingSectionProps> = ({ lang }) => {
                 </div>
                 <div className="flex items-center gap-2">
                   <Check className="w-4 h-4 text-indigo-400 shrink-0" />
-                  <span>Dedicated Architect & PM</span>
+                  <span>Dedicated Architect &amp; PM</span>
                 </div>
               </div>
             </div>

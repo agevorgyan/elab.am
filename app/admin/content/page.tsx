@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { ServiceItem } from '@/lib/services';
 import { TRANSLATIONS } from '@/lib/translations';
-import { Plus, Edit3, Trash2, CheckCircle2, AlertCircle, Eye, EyeOff, Globe2, HelpCircle, Save, X } from 'lucide-react';
+import { Plus, Edit3, Trash2, CheckCircle2, AlertCircle, Eye, EyeOff, Globe2, HelpCircle, Save, X, DollarSign, Tag, Star } from 'lucide-react';
 
 export default function AdminContentPage() {
   const [services, setServices] = useState<ServiceItem[]>([]);
@@ -18,6 +18,11 @@ export default function AdminContentPage() {
     title: '',
     slug: '',
     priceAmd: '',
+    priceCurrency: 'AMD',
+    showPrice: true,
+    priceLabel: 'Starting from',
+    popular: false,
+    tagline: '',
     description: '',
     icon: 'Zap',
     ctaText: 'Order Service →',
@@ -52,6 +57,11 @@ export default function AdminContentPage() {
       title: '',
       slug: '',
       priceAmd: '',
+      priceCurrency: 'AMD',
+      showPrice: true,
+      priceLabel: 'Starting from',
+      popular: false,
+      tagline: '',
       description: '',
       icon: 'Zap',
       ctaText: 'Order Service →',
@@ -70,6 +80,11 @@ export default function AdminContentPage() {
       title: service.title,
       slug: service.slug,
       priceAmd: service.priceAmd,
+      priceCurrency: service.priceCurrency || 'AMD',
+      showPrice: service.showPrice ?? true,
+      priceLabel: service.priceLabel || 'Starting from',
+      popular: service.popular ?? false,
+      tagline: service.tagline || service.description,
       description: service.description,
       icon: service.icon || 'Zap',
       ctaText: service.ctaText || 'Order Service →',
@@ -96,6 +111,11 @@ export default function AdminContentPage() {
       title: formData.title,
       slug: formData.slug,
       priceAmd: formData.priceAmd,
+      priceCurrency: formData.priceCurrency,
+      showPrice: formData.showPrice,
+      priceLabel: formData.priceLabel,
+      popular: formData.popular,
+      tagline: formData.tagline,
       description: formData.description,
       icon: formData.icon,
       ctaText: formData.ctaText,
@@ -173,10 +193,10 @@ export default function AdminContentPage() {
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
-            Content &amp; Services CMS<span className="text-[#00dc93]">.</span>
+            Services &amp; Pricing CMS<span className="text-[#00dc93]">.</span>
           </h1>
           <p className="text-xs text-slate-400 mt-1">
-            PostgreSQL-backed CMS: Create, edit, publish/unpublish, reorder, and configure service packages.
+            PostgreSQL-backed CMS: Edit starting prices, change currencies, toggle display, set custom labels, and reorder.
           </p>
         </div>
 
@@ -195,7 +215,7 @@ export default function AdminContentPage() {
         )}
       </div>
 
-      {/* Services CMS Management Section */}
+      {/* Services & Pricing Management Section */}
       <div className="p-8 rounded-3xl bg-[#141722] border border-white/10 space-y-6">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -203,8 +223,8 @@ export default function AdminContentPage() {
               <Globe2 className="w-5 h-5" />
             </div>
             <div>
-              <h2 className="text-base font-extrabold text-white">Digital Service Packages ({services.length})</h2>
-              <p className="text-xs text-slate-400">PostgreSQL stored packages &amp; AMD pricing</p>
+              <h2 className="text-base font-extrabold text-white">Digital Service Packages &amp; Pricing ({services.length})</h2>
+              <p className="text-xs text-slate-400">Database-backed prices, currencies, and display toggles</p>
             </div>
           </div>
 
@@ -226,11 +246,19 @@ export default function AdminContentPage() {
                 <div className="space-y-3">
                   <div className="flex items-center justify-between border-b border-white/5 pb-3">
                     <span className="text-2xl font-black text-slate-600 font-mono">0{idx + 1}</span>
-                    <span className="text-xs font-black text-[#00dc93] font-mono">{item.priceAmd}</span>
+                    <div className="text-right">
+                      <span className="text-[10px] text-slate-400 font-mono uppercase block">{item.priceLabel || 'Starting from'}</span>
+                      <span className="text-xs font-black text-[#00dc93] font-mono">
+                        {item.showPrice ? `${item.priceAmd} ${item.priceCurrency || 'AMD'}` : 'Custom Quote'}
+                      </span>
+                    </div>
                   </div>
 
                   <div className="flex items-center justify-between">
-                    <h3 className="text-base font-bold text-white">{item.title}</h3>
+                    <h3 className="text-base font-bold text-white flex items-center gap-1.5">
+                      <span>{item.title}</span>
+                      {item.popular && <Star className="w-3.5 h-3.5 text-[#00dc93] fill-[#00dc93]" />}
+                    </h3>
                     <button
                       onClick={() => handleTogglePublish(item)}
                       title={item.published ? 'Published (Click to unpublish)' : 'Draft (Click to publish)'}
@@ -243,18 +271,6 @@ export default function AdminContentPage() {
                   </div>
 
                   <p className="text-xs text-slate-400 line-clamp-2 leading-relaxed">{item.description}</p>
-
-                  <div className="space-y-1.5 pt-2 border-t border-white/5">
-                    {item.features.slice(0, 3).map((f) => (
-                      <div key={f.text} className="text-[11px] text-slate-300 flex items-center gap-1.5">
-                        <span className="text-[#00dc93]">✓</span>
-                        <span>{f.text}</span>
-                      </div>
-                    ))}
-                    {item.features.length > 3 && (
-                      <div className="text-[10px] text-slate-500 italic">+ {item.features.length - 3} more features</div>
-                    )}
-                  </div>
                 </div>
 
                 <div className="pt-4 border-t border-white/5 flex items-center justify-between">
@@ -263,7 +279,7 @@ export default function AdminContentPage() {
                     className="px-3 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 text-white font-bold text-xs flex items-center gap-1 transition-colors"
                   >
                     <Edit3 className="w-3.5 h-3.5 text-[#00dc93]" />
-                    <span>Edit</span>
+                    <span>Edit Pricing &amp; Package</span>
                   </button>
 
                   <button
@@ -298,7 +314,7 @@ export default function AdminContentPage() {
                 <div className="font-bold text-white">{item.q}</div>
                 <div className="text-slate-400 mt-0.5 line-clamp-1">{item.a}</div>
               </div>
-              <button className="p-2 rounded-xl bg-white/5 text-slate-300 hover:text-[#00dc93]">
+              <button className="p-2 rounded-xl bg-white/5 text-slate-[#00dc93] hover:text-[#00dc93]">
                 <Edit3 className="w-4 h-4" />
               </button>
             </div>
@@ -313,7 +329,7 @@ export default function AdminContentPage() {
             
             <div className="flex items-center justify-between border-b border-white/10 pb-4">
               <h3 className="text-base font-black text-white">
-                {editingId ? 'Edit Service Package' : 'Create New Service Package'}
+                {editingId ? 'Edit Service Package & Pricing' : 'Create New Service Package & Pricing'}
               </h3>
               <button onClick={() => setModalOpen(false)} className="p-1 rounded-lg text-slate-400 hover:text-white">
                 <X className="w-5 h-5" />
@@ -328,6 +344,8 @@ export default function AdminContentPage() {
             )}
 
             <form onSubmit={handleSubmit} className="space-y-5">
+              
+              {/* Package Identification */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1.5">
                   <label className="font-bold text-slate-300 uppercase">Service Title</label>
@@ -358,21 +376,96 @@ export default function AdminContentPage() {
                 </div>
               </div>
 
+              {/* Pricing Management Controls */}
+              <div className="p-4 rounded-2xl bg-[#0b0c10] border border-white/10 space-y-4">
+                <div className="flex items-center gap-2 text-white font-extrabold text-xs">
+                  <DollarSign className="w-4 h-4 text-[#00dc93]" />
+                  <span>Pricing &amp; Currency Controls</span>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <div className="space-y-1.5">
+                    <label className="font-bold text-slate-300 uppercase">Starting Price</label>
+                    <input
+                      type="text"
+                      required
+                      value={formData.priceAmd}
+                      onChange={(e) => setFormData({ ...formData, priceAmd: e.target.value })}
+                      placeholder="e.g. 250,000"
+                      className="w-full px-4 py-3 rounded-xl bg-[#141722] border border-white/10 text-white font-bold focus:outline-none focus:border-[#00dc93]"
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="font-bold text-slate-300 uppercase">Currency</label>
+                    <select
+                      value={formData.priceCurrency}
+                      onChange={(e) => setFormData({ ...formData, priceCurrency: e.target.value })}
+                      className="w-full px-4 py-3 rounded-xl bg-[#141722] border border-white/10 text-white font-bold focus:outline-none focus:border-[#00dc93]"
+                    >
+                      <option value="AMD">AMD (֏)</option>
+                      <option value="USD">USD ($)</option>
+                      <option value="EUR">EUR (€)</option>
+                      <option value="RUB">RUB (₽)</option>
+                    </select>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="font-bold text-slate-300 uppercase">Price Label</label>
+                    <input
+                      type="text"
+                      value={formData.priceLabel}
+                      onChange={(e) => setFormData({ ...formData, priceLabel: e.target.value })}
+                      placeholder="e.g. Starting from"
+                      className="w-full px-4 py-3 rounded-xl bg-[#141722] border border-white/10 text-white font-bold focus:outline-none focus:border-[#00dc93]"
+                    />
+                  </div>
+                </div>
+
+                <div className="flex flex-wrap gap-6 pt-2">
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      id="showPrice"
+                      checked={formData.showPrice}
+                      onChange={(e) => setFormData({ ...formData, showPrice: e.target.checked })}
+                      className="w-4 h-4 accent-[#00dc93] rounded"
+                    />
+                    <label htmlFor="showPrice" className="font-bold text-white cursor-pointer">
+                      Enable price display (Uncheck for "Custom Quote")
+                    </label>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      id="popular"
+                      checked={formData.popular}
+                      onChange={(e) => setFormData({ ...formData, popular: e.target.checked })}
+                      className="w-4 h-4 accent-[#00dc93] rounded"
+                    />
+                    <label htmlFor="popular" className="font-bold text-white cursor-pointer">
+                      Mark tier as Popular / Highlighted
+                    </label>
+                  </div>
+                </div>
+              </div>
+
+              {/* Tagline & CTA */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1.5">
-                  <label className="font-bold text-slate-300 uppercase">Starting Price (AMD)</label>
+                  <label className="font-bold text-slate-300 uppercase">Tagline / Subtitle</label>
                   <input
                     type="text"
-                    required
-                    value={formData.priceAmd}
-                    onChange={(e) => setFormData({ ...formData, priceAmd: e.target.value })}
-                    placeholder="e.g. 250,000 AMD"
-                    className="w-full px-4 py-3 rounded-xl bg-[#0b0c10] border border-white/10 text-white font-bold focus:outline-none focus:border-[#00dc93]"
+                    value={formData.tagline}
+                    onChange={(e) => setFormData({ ...formData, tagline: e.target.value })}
+                    placeholder="Short summary tagline for pricing card..."
+                    className="w-full px-4 py-3 rounded-xl bg-[#0b0c10] border border-white/10 text-white focus:outline-none focus:border-[#00dc93]"
                   />
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="font-bold text-slate-300 uppercase">CTA Button Text</label>
+                  <label className="font-bold text-slate-300 uppercase">CTA Button Label</label>
                   <input
                     type="text"
                     value={formData.ctaText}
@@ -384,10 +477,10 @@ export default function AdminContentPage() {
               </div>
 
               <div className="space-y-1.5">
-                <label className="font-bold text-slate-300 uppercase">Description</label>
+                <label className="font-bold text-slate-300 uppercase">Full Description</label>
                 <textarea
                   required
-                  rows={3}
+                  rows={2}
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                   placeholder="Describe what this service package includes..."
@@ -396,7 +489,7 @@ export default function AdminContentPage() {
               </div>
 
               <div className="space-y-1.5">
-                <label className="font-bold text-slate-300 uppercase">Feature Bullet Points (One per line)</label>
+                <label className="font-bold text-slate-300 uppercase">Included Features (One per line)</label>
                 <textarea
                   rows={4}
                   value={formData.featuresText}
@@ -434,7 +527,7 @@ export default function AdminContentPage() {
                   className="px-6 py-3 rounded-xl bg-[#00dc93] text-black font-extrabold flex items-center gap-2 shadow-lg shadow-[#00dc93]/20 disabled:opacity-50"
                 >
                   <Save className="w-4 h-4" />
-                  <span>{saving ? 'Saving...' : editingId ? 'Update Service' : 'Create Service'}</span>
+                  <span>{saving ? 'Saving...' : editingId ? 'Update Pricing & Package' : 'Create Package'}</span>
                 </button>
               </div>
             </form>
