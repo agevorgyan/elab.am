@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { Language, TRANSLATIONS } from '@/lib/translations';
-import { ArrowRight, ShieldCheck, Zap, Sparkles, PhoneCall } from 'lucide-react';
+import { ArrowRight, ShieldCheck, Zap, Sparkles } from 'lucide-react';
 
 interface HeroProps {
   lang: Language;
@@ -86,7 +86,7 @@ export const Hero: React.FC<HeroProps> = ({ lang }) => {
                 <span className="text-[10px] font-mono text-slate-400">elab.am / showcase</span>
               </div>
 
-              {/* Real Project Visual Preview (Gayane's Kitchen) */}
+              {/* Real Project Visual Preview */}
               <div className="relative rounded-2xl overflow-hidden border border-white/10 bg-slate-950 aspect-[4/3]">
                 <img
                   src="https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=1000&q=80"
@@ -98,7 +98,7 @@ export const Hero: React.FC<HeroProps> = ({ lang }) => {
                 <div className="absolute bottom-3 left-3 right-3 p-3 rounded-xl bg-[#0b0c10]/90 backdrop-blur-md border border-white/10 flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <div className="w-2 h-2 rounded-full bg-[#00dc93] animate-pulse" />
-                    <span className="text-[11px] font-bold text-white">Gayane's Kitchen</span>
+                    <span className="text-[11px] font-bold text-white">Gayane&apos;s Kitchen</span>
                   </div>
                   <span className="text-[10px] font-mono text-[#00dc93] font-bold bg-[#00dc93]/10 px-2 py-0.5 rounded border border-[#00dc93]/20">
                     Performance 99/100
@@ -110,7 +110,7 @@ export const Hero: React.FC<HeroProps> = ({ lang }) => {
               <div className="mt-4 p-3.5 rounded-2xl bg-white/5 border border-white/5 flex items-center justify-between text-xs">
                 <div>
                   <div className="text-white font-bold">10+ Years Building Web Solutions</div>
-                  <div className="text-[10px] text-slate-400 mt-0.5">50+ Verified Armenian & Global Cases</div>
+                  <div className="text-[10px] text-slate-400 mt-0.5">50+ Verified Armenian &amp; Global Cases</div>
                 </div>
                 <div className="w-9 h-9 rounded-xl bg-[#00dc93]/10 border border-[#00dc93]/30 text-[#00dc93] flex items-center justify-center font-mono font-bold text-xs">
                   50+

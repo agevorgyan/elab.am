@@ -1,8 +1,8 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import Link from 'next/link';
-import { ShieldCheck, Cookie, Check, X, Settings } from 'lucide-react';
+import { ShieldCheck, Cookie, X, Settings } from 'lucide-react';
 
 export interface CookieConsentState {
   version: number;
@@ -17,7 +17,20 @@ const CONSENT_KEY = 'elab_cookie_consent_v1';
 const CURRENT_VERSION = 1;
 
 export const CookieConsent: React.FC = () => {
-  const [showBanner, setShowBanner] = useState<boolean>(false);
+  const [showBanner, setShowBanner] = useState<boolean>(() => {
+    if (typeof window === 'undefined') return false;
+    try {
+      const stored = localStorage.getItem(CONSENT_KEY);
+      if (stored) {
+        const parsed: CookieConsentState = JSON.parse(stored);
+        return parsed.version !== CURRENT_VERSION;
+      }
+      return true;
+    } catch {
+      return true;
+    }
+  });
+
   const [showPreferences, setShowPreferences] = useState<boolean>(false);
 
   const [preferences, setPreferences] = useState<{
@@ -30,30 +43,15 @@ export const CookieConsent: React.FC = () => {
     marketing: false,
   });
 
-  useEffect(() => {
-    try {
-      const stored = localStorage.getItem(CONSENT_KEY);
-      if (stored) {
-        const parsed: CookieConsentState = JSON.parse(stored);
-        if (parsed.version !== CURRENT_VERSION) {
-          setShowBanner(true);
-        }
-      } else {
-        setShowBanner(true);
-      }
-    } catch (e) {
-      setShowBanner(true);
-    }
-  }, []);
-
   const saveConsent = (state: CookieConsentState) => {
     try {
       localStorage.setItem(CONSENT_KEY, JSON.stringify(state));
-    } catch (e) {}
+    } catch {
+      // Ignored
+    }
     setShowBanner(false);
     setShowPreferences(false);
 
-    // Dynamic analytics initialization based on consent
     if (state.analytics && typeof window !== 'undefined') {
       console.log('[eLab Cookie Consent]: Analytics enabled.');
     }
@@ -94,7 +92,7 @@ export const CookieConsent: React.FC = () => {
 
   return (
     <>
-      {/* 1. COOKIE CONSENT BANNER (Rule #9 & #10) */}
+      {/* COOKIE CONSENT BANNER */}
       {showBanner && !showPreferences && (
         <div className="fixed bottom-4 left-4 right-4 md:left-8 md:right-auto md:max-w-xl z-50 animate-fadeIn">
           <div className="p-6 rounded-3xl bg-[#141722]/95 backdrop-blur-2xl border border-white/15 shadow-2xl space-y-4 text-xs text-slate-300">
@@ -102,7 +100,7 @@ export const CookieConsent: React.FC = () => {
               <div className="w-9 h-9 rounded-xl bg-[#00dc93]/10 text-[#00dc93] flex items-center justify-center shrink-0">
                 <Cookie className="w-5 h-5" />
               </div>
-              <h3 className="text-sm font-extrabold text-white">We Value Your Privacy & Choice</h3>
+              <h3 className="text-sm font-extrabold text-white">We Value Your Privacy &amp; Choice</h3>
             </div>
 
             <p className="leading-relaxed">
@@ -146,7 +144,7 @@ export const CookieConsent: React.FC = () => {
         </div>
       )}
 
-      {/* 2. COOKIE PREFERENCES MODAL (Rule #11) */}
+      {/* COOKIE PREFERENCES MODAL */}
       {showPreferences && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fadeIn">
           <div className="relative w-full max-w-lg rounded-3xl bg-[#141722] border border-white/15 shadow-2xl p-6 sm:p-8 space-y-6 text-xs text-slate-300">
@@ -165,7 +163,6 @@ export const CookieConsent: React.FC = () => {
             </div>
 
             <div className="space-y-4">
-              {/* Necessary Category */}
               <div className="p-4 rounded-2xl bg-[#0b0c10] border border-white/5 space-y-1">
                 <div className="flex items-center justify-between">
                   <span className="font-bold text-white">Strictly Necessary Cookies</span>
@@ -178,7 +175,6 @@ export const CookieConsent: React.FC = () => {
                 </p>
               </div>
 
-              {/* Preferences Category */}
               <div className="p-4 rounded-2xl bg-[#0b0c10] border border-white/5 space-y-1">
                 <div className="flex items-center justify-between">
                   <span className="font-bold text-white">Functional Preferences</span>
@@ -194,10 +190,9 @@ export const CookieConsent: React.FC = () => {
                 </p>
               </div>
 
-              {/* Analytics Category */}
               <div className="p-4 rounded-2xl bg-[#0b0c10] border border-white/5 space-y-1">
                 <div className="flex items-center justify-between">
-                  <span className="font-bold text-white">Performance & Analytics</span>
+                  <span className="font-bold text-white">Performance &amp; Analytics</span>
                   <input
                     type="checkbox"
                     checked={preferences.analytics}
@@ -210,10 +205,9 @@ export const CookieConsent: React.FC = () => {
                 </p>
               </div>
 
-              {/* Marketing Category */}
               <div className="p-4 rounded-2xl bg-[#0b0c10] border border-white/5 space-y-1">
                 <div className="flex items-center justify-between">
-                  <span className="font-bold text-white">Marketing & Remarketing</span>
+                  <span className="font-bold text-white">Marketing &amp; Remarketing</span>
                   <input
                     type="checkbox"
                     checked={preferences.marketing}

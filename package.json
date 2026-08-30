@@ -4,11 +4,20 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "npx prisma@6 generate && next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint .",
+    "db:generate": "npx prisma@6 generate",
+    "db:migrate": "npx prisma@6 migrate dev",
+    "db:deploy": "npx prisma@6 migrate deploy",
+    "db:studio": "npx prisma@6 studio",
+    "db:seed": "npx tsx prisma/seed.ts"
+  },
+  "prisma": {
+    "seed": "npx tsx prisma/seed.ts"
   },
   "dependencies": {
+    "@prisma/client": "^6.19.3",
     "clsx": "^2.1.1",
     "lucide-react": "^1.34.0",
     "next": "16.3.3",
@@ -23,7 +32,9 @@
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.3.3",
+    "prisma": "^6.19.3",
     "tailwindcss": "^4",
+    "tsx": "^4.19.3",
     "typescript": "^5"
   }
 }
