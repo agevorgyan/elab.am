@@ -20,6 +20,15 @@ export const metadata: Metadata = {
     'Վեբ կայքերի ստեղծում',
     'Создание сайтов Армения',
   ],
+  icons: {
+    icon: [
+      { url: '/icon.svg', type: 'image/svg+xml' },
+      { url: 'https://elab.am/wp-content/uploads/2024/02/Artboard-2.svg', type: 'image/svg+xml' },
+    ],
+    apple: [
+      { url: '/icon.svg' },
+    ],
+  },
   authors: [{ name: 'eLab Digital Studio', url: 'https://elab.am' }],
   creator: 'eLab Digital Studio',
   publisher: 'eLab',

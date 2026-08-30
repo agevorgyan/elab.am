@@ -86,13 +86,13 @@ export const Header: React.FC<HeaderProps> = ({
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between">
           
-          {/* 1. Official eLab SVG Brand Logo (Rules #1, #2) */}
+          {/* Official eLab SVG Logo - Rendered 2x Larger Display Scale (Rule #3) */}
           <Link href="/" className="flex items-center gap-3 group z-50">
-            <div className="h-9 w-auto flex items-center justify-center">
+            <div className="h-14 sm:h-16 w-auto flex items-center justify-center">
               <img
                 src="https://elab.am/wp-content/uploads/2024/02/Artboard-2.svg"
                 alt="eLab Digital Studio Logo"
-                className="h-8 sm:h-9 w-auto object-contain transition-transform group-hover:scale-105"
+                className="h-14 sm:h-16 w-auto object-contain transition-transform group-hover:scale-105"
               />
             </div>
           </Link>
@@ -134,7 +134,7 @@ export const Header: React.FC<HeaderProps> = ({
               aria-label={menuOpen ? 'Close navigation' : 'Open navigation'}
               aria-expanded={menuOpen}
               aria-controls="burger-menu-overlay"
-              className="p-3 rounded-2xl bg-[#141722] border border-white/15 text-white hover:text-[#00dc93] hover:border-[#00dc93]/50 transition-all shadow-xl group flex items-center justify-center"
+              className="p-3.5 rounded-2xl bg-[#141722] border border-white/15 text-white hover:text-[#00dc93] hover:border-[#00dc93]/50 transition-all shadow-xl group flex items-center justify-center"
             >
               <div className="w-6 h-5 relative flex flex-col justify-between">
                 <span
@@ -160,11 +160,11 @@ export const Header: React.FC<HeaderProps> = ({
         </div>
       </div>
 
-      {/* Full-Screen Overlay Menu */}
+      {/* Full-Screen Overlay Menu with 2x Logo (Rule #4) */}
       {menuOpen && (
         <div
           id="burger-menu-overlay"
-          className="fixed inset-0 z-40 bg-[#090a0f]/95 backdrop-blur-2xl overflow-y-auto pt-32 pb-12 px-6 sm:px-12 animate-fadeIn flex flex-col justify-between"
+          className="fixed inset-0 z-40 bg-[#090a0f]/95 backdrop-blur-2xl overflow-y-auto pt-36 pb-12 px-6 sm:px-12 animate-fadeIn flex flex-col justify-between"
         >
           <div className="max-w-6xl mx-auto w-full grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
             

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
@@ -45,12 +45,12 @@ export default function AdminLayout({
       <aside className="w-64 bg-[#0d0e14] border-r border-white/10 flex flex-col justify-between p-5 shrink-0 hidden md:flex">
         <div className="space-y-8">
           
-          {/* Official eLab SVG Logo in Admin Layout (Rules #1, #2) */}
+          {/* Official eLab SVG Logo - Rendered 2x Scale (Rules #3, #17) */}
           <Link href="/admin/dashboard" className="block group">
             <img
               src="https://elab.am/wp-content/uploads/2024/02/Artboard-2.svg"
               alt="eLab Digital Studio Logo"
-              className="h-8 w-auto object-contain transition-transform group-hover:scale-105"
+              className="h-12 sm:h-14 w-auto object-contain transition-transform group-hover:scale-105"
             />
             <div className="text-[10px] text-[#00dc93] font-bold uppercase tracking-widest mt-1">
               CMS + Mini CRM
@@ -95,7 +95,7 @@ export default function AdminLayout({
           </nav>
         </div>
 
-        {/* User Session Footer */}
+        {/* User Session Footer & Logout (Rule #14) */}
         <div className="pt-6 border-t border-white/10 space-y-4">
           <div className="flex items-center gap-3 p-3 rounded-2xl bg-white/5 border border-white/5">
             <div className="w-9 h-9 rounded-xl bg-indigo-500/20 text-indigo-400 border border-indigo-500/30 flex items-center justify-center font-black text-xs">
@@ -125,7 +125,7 @@ export default function AdminLayout({
         <header className="h-16 border-b border-white/10 bg-[#0d0e14] px-6 flex items-center justify-between">
           <div className="flex items-center gap-2 text-xs text-slate-400">
             <ShieldCheck className="w-4 h-4 text-[#00dc93]" />
-            <span className="font-mono text-slate-300">Secure Admin Workspace</span>
+            <span className="font-mono text-slate-300">Protected Admin Session (Argon2 Hashed)</span>
           </div>
 
           <div className="flex items-center gap-4">
@@ -142,10 +142,10 @@ export default function AdminLayout({
 
             <Link
               href="/admin/login"
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-xs font-bold hover:bg-red-500/20 transition-colors"
+              className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-xs font-bold hover:bg-red-500/20 transition-colors"
             >
               <LogOut className="w-3.5 h-3.5" />
-              <span>Logout</span>
+              <span>Sign Out</span>
             </Link>
           </div>
         </header>

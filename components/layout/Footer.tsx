@@ -29,13 +29,13 @@ export const Footer: React.FC<FooterProps> = ({ lang }) => {
         
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8">
           
-          {/* Official eLab SVG Logo in Footer (Rules #1, #2) */}
+          {/* Official eLab SVG Logo - Rendered 2x Scale (Rule #3) */}
           <div className="lg:col-span-2 space-y-4">
             <Link href="/" className="inline-block group">
               <img
                 src="https://elab.am/wp-content/uploads/2024/02/Artboard-2.svg"
                 alt="eLab Digital Studio Logo"
-                className="h-9 w-auto object-contain transition-transform group-hover:scale-105"
+                className="h-14 sm:h-16 w-auto object-contain transition-transform group-hover:scale-105"
               />
             </Link>
 
@@ -126,7 +126,7 @@ export const Footer: React.FC<FooterProps> = ({ lang }) => {
             </ul>
           </div>
 
-          {/* Contact Info (Rules #3, #4) */}
+          {/* Contact Info */}
           <div className="space-y-3">
             <h4 className="font-bold text-white uppercase text-xs tracking-wider">{t.contacts}</h4>
             <div className="space-y-2 text-xs">
