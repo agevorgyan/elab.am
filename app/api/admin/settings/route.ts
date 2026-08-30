@@ -4,16 +4,19 @@ import { getSiteSettings, updateSiteSettings } from '@/lib/settings';
 import prisma from '@/lib/prisma';
 
 export async function GET() {
+  const { errorResponse } = await requireAdminPermission('manage_settings');
+  if (errorResponse) return errorResponse;
+
   try {
     const settings = await getSiteSettings();
     return NextResponse.json({ settings });
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: 'Failed to fetch settings' }, { status: 500 });
   }
 }
 
 export async function POST(req: NextRequest) {
-  // Server-side RBAC Permission check (Rules #7, #8)
+  // Server-side RBAC Permission check
   const { user, errorResponse } = await requireAdminPermission('manage_settings');
   if (errorResponse) return errorResponse;
 

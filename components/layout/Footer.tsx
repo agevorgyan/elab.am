@@ -18,10 +18,9 @@ export const Footer: React.FC<FooterProps> = ({ lang }) => {
   };
 
   const reopenCookiePreferences = () => {
-    try {
-      localStorage.removeItem('elab_cookie_consent_v1');
-      window.location.reload();
-    } catch {}
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new Event('elab:open-cookie-settings'));
+    }
   };
 
   return (

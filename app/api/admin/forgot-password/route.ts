@@ -2,33 +2,14 @@ import { NextRequest, NextResponse } from 'next/server';
 import crypto from 'crypto';
 import prisma from '@/lib/prisma';
 import { sendEmail } from '@/lib/email-notifications';
-
-const resetRateLimitMap = new Map<string, number[]>();
-const WINDOW_MS = 15 * 60 * 1000;
-const MAX_RESET_REQUESTS = 3;
-
-function isResetRateLimited(ip: string): boolean {
-  const now = Date.now();
-  const timestamps = resetRateLimitMap.get(ip) || [];
-  const validTimestamps = timestamps.filter((ts) => now - ts < WINDOW_MS);
-
-  if (validTimestamps.length >= MAX_RESET_REQUESTS) {
-    return true;
-  }
-
-  validTimestamps.push(now);
-  resetRateLimitMap.set(ip, validTimestamps);
-  return false;
-}
+import { getClientIp, checkRateLimit, createRateLimitResponse, RATE_LIMIT_PRESETS } from '@/lib/rate-limiter';
 
 export async function POST(req: NextRequest) {
-  const clientIp = req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || '127.0.0.1';
+  const clientIp = getClientIp(req);
+  const rateLimitResult = checkRateLimit(`reset_req:${clientIp}`, RATE_LIMIT_PRESETS.AUTH_RESET);
 
-  if (isResetRateLimited(clientIp)) {
-    return NextResponse.json(
-      { success: false, error: 'Too many password reset requests. Please try again in 15 minutes.' },
-      { status: 429 }
-    );
+  if (!rateLimitResult.success) {
+    return createRateLimitResponse(rateLimitResult);
   }
 
   const GENERIC_SUCCESS_RESPONSE = NextResponse.json({

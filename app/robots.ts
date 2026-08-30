@@ -1,11 +1,14 @@
 import { MetadataRoute } from 'next';
 
 export default function robots(): MetadataRoute.Robots {
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://elab.am';
+
   return {
     rules: {
       userAgent: '*',
       allow: '/',
+      disallow: ['/admin/', '/api/'],
     },
-    sitemap: 'https://elab.am/sitemap.xml',
+    sitemap: `${baseUrl}/sitemap.xml`,
   };
 }

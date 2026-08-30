@@ -104,6 +104,73 @@ export async function getAllServicesAdmin(): Promise<ServiceItem[]> {
 }
 
 /**
+ * Fetches paginated services with server-side database search for Admin CMS
+ */
+export async function getPaginatedServicesAdmin(
+  page = 1,
+  limit = 10,
+  search = ''
+): Promise<{ services: ServiceItem[]; total: number; totalPages: number; page: number }> {
+  try {
+    const safeLimit = Math.min(Math.max(1, limit), 100);
+    const safePage = Math.max(1, page);
+
+    const where: { title?: { contains: string; mode: 'insensitive' } } = {};
+    if (search.trim()) {
+      where.title = { contains: search.trim(), mode: 'insensitive' };
+    }
+
+    const skip = (safePage - 1) * safeLimit;
+
+    const [total, rawServices] = await Promise.all([
+      prisma.service.count({ where }),
+      prisma.service.findMany({
+        where,
+        orderBy: { sortOrder: 'asc' },
+        skip,
+        take: safeLimit,
+        include: {
+          features: {
+            orderBy: { sortOrder: 'asc' },
+          },
+        },
+      }),
+    ]);
+
+    const totalPages = Math.ceil(total / safeLimit) || 1;
+
+    return {
+      services: rawServices.map((s) => ({
+        id: s.id,
+        slug: s.slug,
+        title: s.title,
+        priceAmd: s.priceAmd,
+        priceCurrency: s.priceCurrency || 'AMD',
+        showPrice: s.showPrice ?? true,
+        priceLabel: s.priceLabel || 'Starting from',
+        popular: s.popular ?? false,
+        tagline: s.tagline || s.description,
+        description: s.description,
+        icon: s.icon,
+        ctaText: s.ctaText,
+        seoTitle: s.seoTitle,
+        seoDescription: s.seoDescription,
+        sortOrder: s.sortOrder,
+        published: s.published,
+        features: s.features.map((f) => ({ id: f.id, text: f.text, sortOrder: f.sortOrder })),
+        createdAt: s.createdAt,
+        updatedAt: s.updatedAt,
+      })),
+      total,
+      totalPages,
+      page: safePage,
+    };
+  } catch {
+    return { services: [], total: 0, totalPages: 1, page: 1 };
+  }
+}
+
+/**
  * Creates a new service in PostgreSQL with slug uniqueness validation
  */
 export async function createService(data: Partial<ServiceItem>) {

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAdminPermission, verifyPassword, hashPassword, SESSION_COOKIE_NAME } from '@/lib/auth';
+import { checkRateLimit, createRateLimitResponse, RATE_LIMIT_PRESETS } from '@/lib/rate-limiter';
 import prisma from '@/lib/prisma';
 import { cookies } from 'next/headers';
 
@@ -9,6 +10,11 @@ export async function POST(req: NextRequest) {
 
   if (!user) {
     return NextResponse.json({ error: 'Unauthorized.' }, { status: 401 });
+  }
+
+  const rateLimitResult = checkRateLimit(`pw_change:${user.id}`, RATE_LIMIT_PRESETS.AUTH_RESET);
+  if (!rateLimitResult.success) {
+    return createRateLimitResponse(rateLimitResult);
   }
 
   try {

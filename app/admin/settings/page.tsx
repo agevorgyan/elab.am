@@ -302,6 +302,51 @@ export default function AdminSettingsPage() {
           </div>
         </div>
 
+        {/* Analytics & Tracking Settings */}
+        <div className="p-8 rounded-3xl bg-[#141722] border border-white/10 space-y-6">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-[#00dc93]/10 text-[#00dc93] flex items-center justify-center">
+              <Globe className="w-5 h-5" />
+            </div>
+            <div>
+              <h2 className="text-base font-extrabold text-white">Analytics &amp; Consent Tracking</h2>
+              <p className="text-xs text-slate-400">Consent-aware Google Analytics measurement ID (e.g., G-XXXXXXXXXX)</p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 text-xs">
+            <div className="space-y-1.5">
+              <label className="font-bold text-slate-300 uppercase">Google Analytics ID (GOOGLE_ANALYTICS_ID)</label>
+              <input
+                type="text"
+                name="googleAnalyticsId"
+                value={settings.googleAnalyticsId || ''}
+                onChange={handleChange}
+                placeholder="G-XXXXXXXXXX"
+                className="w-full px-4 py-3 rounded-xl bg-[#0b0c10] border border-white/10 text-white font-mono focus:outline-none focus:border-[#00dc93]"
+              />
+              <p className="text-[11px] text-slate-400 mt-1">
+                Loads only after explicit Analytics cookie consent.
+              </p>
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="font-bold text-slate-300 uppercase">Meta Pixel ID (META_PIXEL_ID)</label>
+              <input
+                type="text"
+                name="metaPixelId"
+                value={settings.metaPixelId || ''}
+                onChange={handleChange}
+                placeholder="123456789012345"
+                className="w-full px-4 py-3 rounded-xl bg-[#0b0c10] border border-white/10 text-white font-mono focus:outline-none focus:border-[#00dc93]"
+              />
+              <p className="text-[11px] text-slate-400 mt-1">
+                Loads only after explicit Marketing cookie consent.
+              </p>
+            </div>
+          </div>
+        </div>
+
         {/* Save Controls */}
         <div className="flex justify-end">
           <button

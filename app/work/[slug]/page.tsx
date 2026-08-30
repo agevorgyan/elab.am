@@ -19,6 +19,8 @@ export async function generateStaticParams() {
     slug: project.slug,
   }));
 }
+import { buildDynamicMetadata } from '@/lib/seo-db';
+import { PortfolioJsonLd } from '@/components/seo/PortfolioJsonLd';
 
 export async function generateMetadata({ params }: CaseStudyProps): Promise<Metadata> {
   const { slug } = await params;
@@ -30,19 +32,11 @@ export async function generateMetadata({ params }: CaseStudyProps): Promise<Meta
     };
   }
 
-  return {
+  return await buildDynamicMetadata(`/work/${project.slug}`, {
     title: project.seoTitle || `${project.title} — Case Study | eLab Digital Studio`,
     description: project.seoDescription || project.summary,
-    openGraph: {
-      title: `${project.title} — eLab Web Development Case Study`,
-      description: project.summary,
-      url: `https://elab.am/work/${project.slug}`,
-      images: [{ url: project.heroImage || '' }],
-    },
-    alternates: {
-      canonical: `https://elab.am/work/${project.slug}`,
-    },
-  };
+    ogImage: project.heroImage || undefined,
+  });
 }
 
 export default async function CaseStudyPage({ params }: CaseStudyProps) {
@@ -62,31 +56,10 @@ export default async function CaseStudyPage({ params }: CaseStudyProps) {
   const safeServices = Array.isArray(project.services) ? project.services : [];
   const safeResults = Array.isArray(project.results) ? project.results : [];
 
-  // Schema.org Structured Data for CreativeWork Case Study
-  const jsonLd = {
-    '@context': 'https://schema.org',
-    '@type': 'CreativeWork',
-    name: project.title,
-    headline: project.summary,
-    image: project.heroImage,
-    author: {
-      '@type': 'Organization',
-      name: 'eLab Digital Studio',
-      url: 'https://elab.am',
-    },
-    provider: {
-      '@type': 'Organization',
-      name: project.client,
-    },
-    url: `https://elab.am/work/${project.slug}`,
-  };
 
   return (
     <div className="min-h-screen bg-[#090a0f] text-[#f8fafc]">
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-      />
+      <PortfolioJsonLd project={project} />
       <Header lang="en" />
 
       {/* Case Study Hero */}

@@ -1,28 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createLeadPublic } from '@/lib/leads-db';
 import { sendLeadNotifications } from '@/lib/email-notifications';
+import { getClientIp, checkRateLimit, createRateLimitResponse, RATE_LIMIT_PRESETS } from '@/lib/rate-limiter';
 import prisma from '@/lib/prisma';
-
-// Simple in-memory rate limiting store (IP -> timestamp[])
-const rateLimitStore = new Map<string, number[]>();
-const RATE_LIMIT_WINDOW_MS = 15 * 60 * 1000; // 15 minutes
-const MAX_REQUESTS_PER_WINDOW = 5;
-
-function isRateLimited(ip: string): boolean {
-  const now = Date.now();
-  const timestamps = rateLimitStore.get(ip) || [];
-
-  // Filter timestamps within current window
-  const validTimestamps = timestamps.filter((ts) => now - ts < RATE_LIMIT_WINDOW_MS);
-
-  if (validTimestamps.length >= MAX_REQUESTS_PER_WINDOW) {
-    return true;
-  }
-
-  validTimestamps.push(now);
-  rateLimitStore.set(ip, validTimestamps);
-  return false;
-}
 
 /**
  * Strips HTML tags and dangerous script content from input strings
@@ -44,14 +24,12 @@ function isValidEmail(email: string): boolean {
 }
 
 export async function POST(request: NextRequest) {
-  const clientIp = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || '127.0.0.1';
+  const clientIp = getClientIp(request);
 
   // 1. Rate Limiting Check
-  if (isRateLimited(clientIp)) {
-    return NextResponse.json(
-      { success: false, message: 'Too many requests. Please try again in a few minutes.' },
-      { status: 429 }
-    );
+  const rateLimitResult = checkRateLimit(`contact:${clientIp}`, RATE_LIMIT_PRESETS.CONTACT_FORM);
+  if (!rateLimitResult.success) {
+    return createRateLimitResponse(rateLimitResult);
   }
 
   try {

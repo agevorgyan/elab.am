@@ -58,6 +58,7 @@ export default async function AdminLayout({
     { href: '/admin/content', label: 'Content & Services', icon: FileText, permission: 'manage_services' },
     { href: '/admin/media', label: 'Media Library', icon: ImageIcon, permission: 'manage_media' },
     { href: '/admin/seo', label: 'SEO Metadata', icon: Search, permission: 'manage_seo' },
+    { href: '/admin/legal', label: 'Legal CMS', icon: ShieldCheck, permission: 'manage_legal' },
     { href: '/admin/settings', label: 'Site Settings', icon: Settings, permission: 'manage_settings' },
     { href: '/admin/audit-logs', label: 'System Audit Logs', icon: ShieldCheck, permission: 'view_audit_logs' },
   ];

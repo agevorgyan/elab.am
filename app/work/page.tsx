@@ -6,18 +6,16 @@ import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
 import { Layers, ArrowUpRight, Sparkles } from 'lucide-react';
 
-export const metadata: Metadata = {
-  title: 'Selected Work & Case Studies | eLab Digital Studio Armenia',
-  description: 'Explore eLab\'s portfolio of high-converting websites, landing pages, e-commerce stores, and digital solutions engineered for Armenian and global businesses.',
-  alternates: {
-    canonical: 'https://elab.am/work',
-  },
-  openGraph: {
-    title: 'eLab Portfolio — Web Development Case Studies',
-    description: 'Explore eLab\'s selected portfolio of corporate portals, e-commerce stores, and high-converting landing pages.',
-    url: 'https://elab.am/work',
-  },
-};
+import { buildDynamicMetadata } from '@/lib/seo-db';
+import { BreadcrumbJsonLd } from '@/components/seo/BreadcrumbJsonLd';
+import { getBaseUrl } from '@/lib/schema-org';
+
+export async function generateMetadata(): Promise<Metadata> {
+  return await buildDynamicMetadata('/work', {
+    title: 'Selected Work & Case Studies | eLab Digital Studio Armenia',
+    description: 'Explore eLab\'s portfolio of high-converting websites, landing pages, e-commerce stores, and digital solutions engineered for Armenian and global businesses.',
+  });
+}
 
 interface WorkPageProps {
   searchParams: Promise<{
@@ -51,8 +49,17 @@ export default async function WorkPage({ searchParams }: WorkPageProps) {
   const featuredProject = filteredProjects.find((p) => p?.featured) || filteredProjects[0];
   const gridProjects = filteredProjects.filter((p) => p && p.id !== featuredProject?.id);
 
+
+  const baseUrl = getBaseUrl();
+
   return (
     <div className="min-h-screen bg-[#090a0f] text-[#f8fafc]">
+      <BreadcrumbJsonLd
+        items={[
+          { name: 'Home', url: baseUrl },
+          { name: 'Portfolio', url: `${baseUrl}/work` },
+        ]}
+      />
       <Header lang="en" />
 
       {/* Hero Section */}

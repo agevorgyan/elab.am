@@ -27,6 +27,8 @@ export interface SiteSettings {
   linkedin: string;
   youtube: string;
   websiteUrl: string;
+  googleAnalyticsId?: string;
+  metaPixelId?: string;
 }
 
 export const INITIAL_LEADS: Lead[] = [

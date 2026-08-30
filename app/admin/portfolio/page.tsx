@@ -3,13 +3,17 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { DbPortfolioProject } from '@/lib/portfolio-db';
-import { Plus, Search, Edit3, Eye, Trash2, CheckCircle2, AlertCircle, Copy, Star, Save, X } from 'lucide-react';
+import { Plus, Search, Edit3, Eye, Trash2, CheckCircle2, AlertCircle, Copy, Star, Save, X, ChevronLeft, ChevronRight } from 'lucide-react';
 
 export default function AdminPortfolioPage() {
   const [projects, setProjects] = useState<DbPortfolioProject[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const [categoryFilter, setCategoryFilter] = useState('ALL');
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalItems, setTotalItems] = useState(0);
   const [modalOpen, setModalOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [errorMsg, setErrorMsg] = useState('');
@@ -39,37 +43,54 @@ export default function AdminPortfolioPage() {
 
   const fetchProjects = useCallback(async () => {
     try {
-      const res = await fetch('/api/admin/portfolio');
+      const params = new URLSearchParams({
+        page: String(page),
+        limit: '10',
+        search: searchTerm,
+        category: categoryFilter,
+      });
+      const res = await fetch(`/api/admin/portfolio?${params.toString()}`);
       const data = await res.json();
       if (Array.isArray(data.projects)) {
         setProjects(data.projects);
+        setTotalPages(data.totalPages || 1);
+        setTotalItems(data.total || 0);
       }
     } catch {
       setErrorMsg('Failed to load portfolio projects');
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [page, searchTerm, categoryFilter]);
 
   useEffect(() => {
-    let active = true;
-    fetch('/api/admin/portfolio')
+    let isMounted = true;
+    const params = new URLSearchParams({
+      page: String(page),
+      limit: '10',
+      search: searchTerm,
+      category: categoryFilter,
+    });
+    fetch(`/api/admin/portfolio?${params.toString()}`)
       .then((res) => res.json())
       .then((data) => {
-        if (active && Array.isArray(data.projects)) {
+        if (isMounted && Array.isArray(data.projects)) {
           setProjects(data.projects);
+          setTotalPages(data.totalPages || 1);
+          setTotalItems(data.total || 0);
         }
       })
       .catch(() => {
-        if (active) setErrorMsg('Failed to load portfolio projects');
+        if (isMounted) setErrorMsg('Failed to load portfolio projects');
       })
       .finally(() => {
-        if (active) setLoading(false);
+        if (isMounted) setLoading(false);
       });
+
     return () => {
-      active = false;
+      isMounted = false;
     };
-  }, []);
+  }, [page, searchTerm, categoryFilter]);
 
   const openCreateModal = () => {
     setEditingId(null);
@@ -389,6 +410,36 @@ export default function AdminPortfolioPage() {
                 ))}
               </tbody>
             </table>
+
+            {/* Pagination Controls */}
+            {totalPages > 1 && (
+              <div className="flex items-center justify-between pt-4 border-t border-white/5 text-xs text-slate-400">
+                <p>
+                  Showing page <span className="font-bold text-white">{page}</span> of{' '}
+                  <span className="font-bold text-white">{totalPages}</span> ({totalItems} total projects)
+                </p>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    disabled={page <= 1}
+                    onClick={() => setPage((p) => Math.max(1, p - 1))}
+                    className="px-3 py-1.5 rounded-xl bg-[#0b0c10] border border-white/10 text-white font-bold disabled:opacity-40 disabled:cursor-not-allowed hover:bg-white/5 transition-all flex items-center gap-1"
+                  >
+                    <ChevronLeft className="w-4 h-4" />
+                    <span>Previous</span>
+                  </button>
+
+                  <button
+                    disabled={page >= totalPages}
+                    onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                    className="px-3 py-1.5 rounded-xl bg-[#0b0c10] border border-white/10 text-white font-bold disabled:opacity-40 disabled:cursor-not-allowed hover:bg-white/5 transition-all flex items-center gap-1"
+                  >
+                    <span>Next</span>
+                    <ChevronRight className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>

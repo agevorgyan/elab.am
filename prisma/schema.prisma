@@ -314,14 +314,18 @@ model FAQ {
 // 15. SeoMetadata Model
 // ------------------------------------------------------
 model SeoMetadata {
-  id          String   @id @default(cuid())
-  path        String   @unique
-  title       String
-  description String
-  keywords    String[]
-  ogImage     String?
-  canonical   String?
-  updatedAt   DateTime @updatedAt
+  id            String   @id @default(cuid())
+  path          String   @unique
+  title         String
+  description   String
+  keywords      String[]
+  canonical     String?
+  ogTitle       String?
+  ogDescription String?
+  ogImage       String?
+  robots        String   @default("index, follow")
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 
   @@index([path])
 }
@@ -337,9 +341,11 @@ model LegalPage {
   lastUpdated String
   published   Boolean  @default(true)
   version     Int      @default(1)
+  createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
   @@index([slug])
+  @@index([published])
 }
 
 // ------------------------------------------------------

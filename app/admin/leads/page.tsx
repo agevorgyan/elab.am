@@ -17,6 +17,9 @@ import {
   Check,
   Filter,
 } from 'lucide-react';
+import { LoadingState } from '@/components/ui/LoadingState';
+import { ErrorState } from '@/components/ui/ErrorState';
+import { EmptyState } from '@/components/ui/EmptyState';
 
 interface LeadNote {
   id: string;
@@ -350,15 +353,23 @@ export default function AdminLeadsPage() {
           </div>
 
           {loading ? (
-            <div className="text-center py-16 text-xs text-slate-500 flex items-center justify-center gap-2">
-              <RefreshCw className="w-4 h-4 animate-spin text-[#00dc93]" />
-              <span>Loading CRM leads from database...</span>
-            </div>
+            <LoadingState message="Loading CRM leads from database..." rows={4} />
+          ) : errorMsg && leads.length === 0 ? (
+            <ErrorState
+              title="Failed to load CRM leads"
+              message={errorMsg}
+              onRetry={() => {
+                setErrorMsg(null);
+                setLoading(true);
+                setPage(1);
+              }}
+            />
           ) : leads.length === 0 ? (
-            <div className="text-center py-16 text-xs text-slate-400 space-y-2">
-              <Users className="w-8 h-8 text-slate-600 mx-auto" />
-              <p>No leads found in database matching query.</p>
-            </div>
+            <EmptyState
+              icon={<Users className="w-6 h-6" />}
+              title="No CRM Leads Found"
+              description="There are currently no inquiries in the database matching your search or status filter."
+            />
           ) : (
             <div className="space-y-3">
               {leads.map((lead) => {

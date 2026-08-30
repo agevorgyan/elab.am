@@ -1,27 +1,52 @@
 import { MetadataRoute } from 'next';
-import { PORTFOLIO_PROJECTS } from '@/lib/portfolio-data';
+import { getPublishedPortfolioProjects } from '@/lib/portfolio-db';
 
-export default function sitemap(): MetadataRoute.Sitemap {
-  const baseUrl = 'https://elab.am';
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://elab.am';
 
-  const projectRoutes: MetadataRoute.Sitemap = PORTFOLIO_PROJECTS.map((project) => ({
+  // 1. Fetch only published portfolio projects from PostgreSQL database
+  let publishedProjects: Awaited<ReturnType<typeof getPublishedPortfolioProjects>> = [];
+  try {
+    publishedProjects = await getPublishedPortfolioProjects();
+  } catch {
+    publishedProjects = [];
+  }
+
+  const projectRoutes: MetadataRoute.Sitemap = (publishedProjects || []).map((project) => ({
     url: `${baseUrl}/work/${project.slug}`,
-    lastModified: new Date(),
+    lastModified: project.updatedAt ? new Date(project.updatedAt) : new Date(),
     changeFrequency: 'monthly',
     priority: 0.8,
   }));
 
+  // 2. Public Legal & Static Pages
   const legalRoutes: MetadataRoute.Sitemap = [
-    { url: `${baseUrl}/terms`, lastModified: new Date(), changeFrequency: 'yearly', priority: 0.3 },
-    { url: `${baseUrl}/privacy`, lastModified: new Date(), changeFrequency: 'yearly', priority: 0.3 },
-    { url: `${baseUrl}/cookies`, lastModified: new Date(), changeFrequency: 'yearly', priority: 0.3 },
+    {
+      url: `${baseUrl}/privacy`,
+      lastModified: new Date(),
+      changeFrequency: 'monthly',
+      priority: 0.3,
+    },
+    {
+      url: `${baseUrl}/terms`,
+      lastModified: new Date(),
+      changeFrequency: 'monthly',
+      priority: 0.3,
+    },
+    {
+      url: `${baseUrl}/cookies`,
+      lastModified: new Date(),
+      changeFrequency: 'monthly',
+      priority: 0.3,
+    },
   ];
 
-  return [
+  // 3. Main Public Web Pages
+  const coreRoutes: MetadataRoute.Sitemap = [
     {
       url: baseUrl,
       lastModified: new Date(),
-      changeFrequency: 'weekly',
+      changeFrequency: 'daily',
       priority: 1.0,
     },
     {
@@ -30,7 +55,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: 'weekly',
       priority: 0.9,
     },
-    ...legalRoutes,
-    ...projectRoutes,
   ];
+
+  return [...coreRoutes, ...legalRoutes, ...projectRoutes];
 }

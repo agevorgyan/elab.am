@@ -15,6 +15,8 @@ export const DEFAULT_SITE_SETTINGS: SiteSettings = {
   linkedin: 'https://www.linkedin.com/company/elab-armenia/',
   youtube: 'https://www.youtube.com/@eLab-armenia',
   websiteUrl: 'https://elab.am',
+  googleAnalyticsId: process.env.GOOGLE_ANALYTICS_ID || process.env.NEXT_PUBLIC_GA_ID || '',
+  metaPixelId: process.env.META_PIXEL_ID || process.env.NEXT_PUBLIC_META_PIXEL_ID || '',
 };
 
 /**
@@ -46,6 +48,8 @@ export async function getSiteSettings(): Promise<SiteSettings> {
       linkedin: settingsMap['linkedin'] || DEFAULT_SITE_SETTINGS.linkedin,
       youtube: settingsMap['youtube'] || DEFAULT_SITE_SETTINGS.youtube,
       websiteUrl: settingsMap['websiteUrl'] || DEFAULT_SITE_SETTINGS.websiteUrl,
+      googleAnalyticsId: settingsMap['googleAnalyticsId'] || DEFAULT_SITE_SETTINGS.googleAnalyticsId,
+      metaPixelId: settingsMap['metaPixelId'] || DEFAULT_SITE_SETTINGS.metaPixelId,
     };
   } catch {
     return DEFAULT_SITE_SETTINGS;

@@ -1,11 +1,28 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { INITIAL_LEADS } from '@/lib/admin-store';
-import { Users, Briefcase, FileText, TrendingUp, Plus, ArrowUpRight, CheckCircle2, Clock, ShieldCheck, Phone } from 'lucide-react';
+import { Users, Briefcase, FileText, TrendingUp, Plus, ArrowUpRight, Clock, ShieldCheck } from 'lucide-react';
+import { HealthCheckResponse } from '@/app/api/health/route';
 
 export default function AdminDashboardPage() {
+  const [health, setHealth] = useState<HealthCheckResponse | null>(null);
+
+  useEffect(() => {
+    fetch('/api/health')
+      .then((res) => res.json())
+      .then((data: HealthCheckResponse) => setHealth(data))
+      .catch(() => {
+        setHealth({
+          status: 'unhealthy',
+          database: 'unhealthy',
+          storage: 'unhealthy',
+          config: 'unhealthy',
+          timestamp: new Date().toISOString(),
+        });
+      });
+  }, []);
   return (
     <div className="space-y-8 max-w-7xl mx-auto">
       
@@ -169,16 +186,52 @@ export default function AdminDashboardPage() {
           </div>
 
           <div className="p-6 rounded-3xl bg-gradient-to-br from-[#141722] to-[#181b26] border border-[#00dc93]/30 space-y-4">
-            <div className="flex items-center gap-2 text-xs font-bold text-[#00dc93]">
-              <ShieldCheck className="w-4 h-4" />
-              <span>System Verification</span>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2 text-xs font-bold text-[#00dc93]">
+                <ShieldCheck className="w-4 h-4" />
+                <span>Real System Health</span>
+              </div>
+              <span className={`px-2 py-0.5 rounded text-[10px] font-mono font-bold ${
+                health?.status === 'healthy' ? 'bg-[#00dc93]/20 text-[#00dc93]' :
+                health?.status === 'degraded' ? 'bg-amber-500/20 text-amber-400' :
+                'bg-red-500/20 text-red-400'
+              }`}>
+                {health ? health.status.toUpperCase() : 'CHECKING...'}
+              </span>
             </div>
-            <p className="text-xs text-slate-300">
-              PostgreSQL database, Next.js API endpoints, and media storage are online and healthy.
-            </p>
+
+            <div className="space-y-2 text-xs">
+              <div className="flex items-center justify-between p-2 rounded-lg bg-white/5 border border-white/5">
+                <span className="text-slate-300">PostgreSQL Database</span>
+                <span className={`font-mono font-bold text-[11px] ${
+                  health?.database === 'healthy' ? 'text-[#00dc93]' : 'text-red-400'
+                }`}>
+                  {health ? health.database : 'Checking...'}
+                </span>
+              </div>
+
+              <div className="flex items-center justify-between p-2 rounded-lg bg-white/5 border border-white/5">
+                <span className="text-slate-300">Storage System</span>
+                <span className={`font-mono font-bold text-[11px] ${
+                  health?.storage === 'healthy' ? 'text-[#00dc93]' : 'text-red-400'
+                }`}>
+                  {health ? health.storage : 'Checking...'}
+                </span>
+              </div>
+
+              <div className="flex items-center justify-between p-2 rounded-lg bg-white/5 border border-white/5">
+                <span className="text-slate-300">Environment Config</span>
+                <span className={`font-mono font-bold text-[11px] ${
+                  health?.config === 'healthy' ? 'text-[#00dc93]' : 'text-red-400'
+                }`}>
+                  {health ? health.config : 'Checking...'}
+                </span>
+              </div>
+            </div>
+
             <Link
               href="/admin/settings"
-              className="w-full py-2.5 rounded-xl bg-[#00dc93] text-black font-extrabold text-xs text-center block shadow-md"
+              className="w-full py-2.5 rounded-xl bg-[#00dc93] text-black font-extrabold text-xs text-center block shadow-md hover:opacity-90 transition-opacity"
             >
               Configure Site Settings →
             </Link>

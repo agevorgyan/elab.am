@@ -5,6 +5,7 @@ import {
   createServiceAdmin,
   reorderServicesAdmin,
 } from '@/lib/services';
+import { getClientIp, checkRateLimit, createRateLimitResponse, RATE_LIMIT_PRESETS } from '@/lib/rate-limiter';
 import prisma from '@/lib/prisma';
 import { revalidatePath } from 'next/cache';
 
@@ -23,6 +24,12 @@ export async function GET() {
 export async function POST(req: NextRequest) {
   const { user, errorResponse } = await requireAdminPermission('manage_services');
   if (errorResponse) return errorResponse;
+
+  const clientIp = getClientIp(req);
+  const rateLimitResult = checkRateLimit(`admin_mut:${clientIp}`, RATE_LIMIT_PRESETS.ADMIN_MUTATION);
+  if (!rateLimitResult.success) {
+    return createRateLimitResponse(rateLimitResult);
+  }
 
   try {
     const body = await req.json();

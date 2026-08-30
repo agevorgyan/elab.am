@@ -2,6 +2,9 @@ import type { Metadata } from 'next';
 import './globals.css';
 import { JsonLd } from '@/components/seo/JsonLd';
 import { CookieConsent } from '@/components/ui/CookieConsent';
+import { GoogleAnalytics } from '@/components/analytics/GoogleAnalytics';
+import { MetaPixel } from '@/components/analytics/MetaPixel';
+import { getSiteSettings } from '@/lib/settings';
 
 export const metadata: Metadata = {
   title: 'eLab — Web Development & Digital Solutions in Armenia | elab.am',
@@ -63,15 +66,19 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const settings = await getSiteSettings();
+
   return (
     <html lang="hy" className="dark">
       <head>
         <JsonLd />
+        <GoogleAnalytics gaId={settings.googleAnalyticsId} />
+        <MetaPixel pixelId={settings.metaPixelId} />
       </head>
       <body className="antialiased bg-[#0b0c10] text-[#f8fafc]">
         {children}

@@ -178,6 +178,61 @@ export async function getAllPortfolioProjectsAdmin(): Promise<DbPortfolioProject
 }
 
 /**
+ * Fetches paginated portfolio projects for Admin using database skip/take
+ */
+export async function getPaginatedPortfolioProjectsAdmin(
+  page = 1,
+  limit = 10,
+  search = '',
+  categorySlug = 'ALL'
+): Promise<{ projects: DbPortfolioProject[]; total: number; totalPages: number; page: number }> {
+  try {
+    const safeLimit = Math.min(Math.max(1, limit), 100);
+    const safePage = Math.max(1, page);
+
+    const where: Prisma.PortfolioProjectWhereInput = {};
+
+    if (search.trim()) {
+      where.OR = [
+        { title: { contains: search, mode: 'insensitive' } },
+        { client: { contains: search, mode: 'insensitive' } },
+        { summary: { contains: search, mode: 'insensitive' } },
+      ];
+    }
+
+    if (categorySlug && categorySlug !== 'ALL') {
+      where.categories = {
+        some: { slug: categorySlug },
+      };
+    }
+
+    const skip = (safePage - 1) * safeLimit;
+
+    const [total, rawProjects] = await Promise.all([
+      prisma.portfolioProject.count({ where }),
+      prisma.portfolioProject.findMany({
+        where,
+        orderBy: { sortOrder: 'asc' },
+        skip,
+        take: safeLimit,
+        include: defaultIncludes,
+      }),
+    ]);
+
+    const totalPages = Math.ceil(total / safeLimit) || 1;
+
+    return {
+      projects: rawProjects.map(mapProjectRecord),
+      total,
+      totalPages,
+      page: safePage,
+    };
+  } catch {
+    return { projects: [], total: 0, totalPages: 1, page: 1 };
+  }
+}
+
+/**
  * Fetches a single portfolio project by slug
  */
 export async function getPortfolioProjectBySlug(slug: string): Promise<DbPortfolioProject | null> {

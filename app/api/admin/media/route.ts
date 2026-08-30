@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAdminPermission } from '@/lib/auth';
 import { getPaginatedMediaAdmin, saveUploadedMedia } from '@/lib/media-storage';
+import { getClientIp, checkRateLimit, createRateLimitResponse, RATE_LIMIT_PRESETS } from '@/lib/rate-limiter';
 import prisma from '@/lib/prisma';
 
 export async function GET(req: NextRequest) {
@@ -24,6 +25,12 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   const { user, errorResponse } = await requireAdminPermission('manage_media');
   if (errorResponse) return errorResponse;
+
+  const clientIp = getClientIp(req);
+  const rateLimitResult = checkRateLimit(`media_upload:${clientIp}`, RATE_LIMIT_PRESETS.ADMIN_MUTATION);
+  if (!rateLimitResult.success) {
+    return createRateLimitResponse(rateLimitResult);
+  }
 
   try {
     const formData = await req.formData();

@@ -2,8 +2,16 @@ import { NextRequest, NextResponse } from 'next/server';
 import crypto from 'crypto';
 import prisma from '@/lib/prisma';
 import { hashPassword } from '@/lib/auth';
+import { getClientIp, checkRateLimit, createRateLimitResponse, RATE_LIMIT_PRESETS } from '@/lib/rate-limiter';
 
 export async function POST(req: NextRequest) {
+  const clientIp = getClientIp(req);
+  const rateLimitResult = checkRateLimit(`reset_exec:${clientIp}`, RATE_LIMIT_PRESETS.AUTH_RESET);
+
+  if (!rateLimitResult.success) {
+    return createRateLimitResponse(rateLimitResult);
+  }
+
   try {
     const body = await req.json();
     const { token, newPassword, confirmPassword } = body;
