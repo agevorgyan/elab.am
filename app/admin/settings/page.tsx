@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { INITIAL_SETTINGS, SiteSettings } from '@/lib/admin-store';
-import { Settings, Phone, Mail, Globe, Save, CheckCircle2, AlertCircle, KeyRound } from 'lucide-react';
+import { Phone, Mail, Globe, Save, CheckCircle2, AlertCircle, KeyRound, Building, Image as ImageIcon } from 'lucide-react';
 
 export default function AdminSettingsPage() {
   const [settings, setSettings] = useState<SiteSettings>(INITIAL_SETTINGS);
@@ -105,6 +105,56 @@ export default function AdminSettingsPage() {
 
       <form onSubmit={handleSubmit} className="space-y-8">
         
+        {/* Branding Settings */}
+        <div className="p-8 rounded-3xl bg-[#141722] border border-white/10 space-y-6">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-emerald-500/10 text-[#00dc93] flex items-center justify-center">
+              <Building className="w-5 h-5" />
+            </div>
+            <div>
+              <h2 className="text-base font-extrabold text-white">Brand &amp; Identity Settings</h2>
+              <p className="text-xs text-slate-400">Company brand name, logo reference, and official URL</p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 text-xs">
+            <div className="space-y-1.5">
+              <label className="font-bold text-slate-300 uppercase">Company / Brand Name</label>
+              <input
+                type="text"
+                name="siteName"
+                value={settings.siteName}
+                onChange={handleChange}
+                className="w-full px-4 py-3 rounded-xl bg-[#0b0c10] border border-white/10 text-white font-bold focus:outline-none focus:border-[#00dc93]"
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="font-bold text-slate-300 uppercase">Logo Asset Path / URL</label>
+              <div className="relative">
+                <input
+                  type="text"
+                  name="logoUrl"
+                  value={settings.logoUrl}
+                  onChange={handleChange}
+                  className="w-full px-4 py-3 rounded-xl bg-[#0b0c10] border border-white/10 text-white font-bold focus:outline-none focus:border-[#00dc93]"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="font-bold text-slate-300 uppercase">Website Base URL</label>
+              <input
+                type="text"
+                name="websiteUrl"
+                value={settings.websiteUrl}
+                onChange={handleChange}
+                className="w-full px-4 py-3 rounded-xl bg-[#0b0c10] border border-white/10 text-white font-bold focus:outline-none focus:border-[#00dc93]"
+              />
+            </div>
+          </div>
+        </div>
+
         {/* Contact Settings */}
         <div className="p-8 rounded-3xl bg-[#141722] border border-white/10 space-y-6">
           <div className="flex items-center gap-3">

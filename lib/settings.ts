@@ -14,6 +14,7 @@ export const DEFAULT_SITE_SETTINGS: SiteSettings = {
   instagram: 'https://www.instagram.com/elab.armenia/',
   linkedin: 'https://www.linkedin.com/company/elab-armenia/',
   youtube: 'https://www.youtube.com/@eLab-armenia',
+  websiteUrl: 'https://elab.am',
 };
 
 /**
@@ -44,6 +45,7 @@ export async function getSiteSettings(): Promise<SiteSettings> {
       instagram: settingsMap['instagram'] || DEFAULT_SITE_SETTINGS.instagram,
       linkedin: settingsMap['linkedin'] || DEFAULT_SITE_SETTINGS.linkedin,
       youtube: settingsMap['youtube'] || DEFAULT_SITE_SETTINGS.youtube,
+      websiteUrl: settingsMap['websiteUrl'] || DEFAULT_SITE_SETTINGS.websiteUrl,
     };
   } catch {
     return DEFAULT_SITE_SETTINGS;

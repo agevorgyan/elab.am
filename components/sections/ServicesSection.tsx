@@ -1,7 +1,8 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Language, TRANSLATIONS } from '@/lib/translations';
+import { ServiceItem } from '@/lib/services';
 import { Check, ArrowRight, Layout, ShoppingBag, Globe2, QrCode, Newspaper, Cpu } from 'lucide-react';
 
 interface ServicesSectionProps {
@@ -10,8 +11,41 @@ interface ServicesSectionProps {
 
 export const ServicesSection: React.FC<ServicesSectionProps> = ({ lang }) => {
   const t = TRANSLATIONS[lang].services;
+  const [dbServices, setDbServices] = useState<ServiceItem[]>([]);
+
+  useEffect(() => {
+    fetch('/api/services')
+      .then((res) => res.json())
+      .then((data) => {
+        if (Array.isArray(data.services) && data.services.length > 0) {
+          setDbServices(data.services);
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   const serviceIcons = [Layout, Globe2, ShoppingBag, QrCode, Newspaper, Cpu];
+
+  // Use database services if available, fallback to translation items
+  const itemsToRender = dbServices.length > 0
+    ? dbServices.map((s, idx) => ({
+        id: s.id,
+        title: s.title,
+        price: s.priceAmd,
+        desc: s.description,
+        features: s.features.map((f) => f.text),
+        ctaText: s.ctaText || t.discussProject,
+        icon: serviceIcons[idx % serviceIcons.length],
+      }))
+    : t.items.map((service, idx) => ({
+        id: service.id,
+        title: service.title,
+        price: service.price,
+        desc: service.desc,
+        features: service.features,
+        ctaText: t.discussProject,
+        icon: serviceIcons[idx % serviceIcons.length],
+      }));
 
   return (
     <section id="services" className="py-24 bg-[#0d0e14] relative">
@@ -33,8 +67,8 @@ export const ServicesSection: React.FC<ServicesSectionProps> = ({ lang }) => {
 
         {/* Editorial Services Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {t.items.map((service, index) => {
-            const Icon = serviceIcons[index % serviceIcons.length];
+          {itemsToRender.map((service, index) => {
+            const Icon = service.icon;
             const itemNumber = `0${index + 1}`;
 
             return (
@@ -91,7 +125,7 @@ export const ServicesSection: React.FC<ServicesSectionProps> = ({ lang }) => {
                     href="#contact"
                     className="w-full py-3.5 rounded-xl bg-white/5 group-hover:bg-[#00dc93] text-white group-hover:text-black font-bold text-xs flex items-center justify-center gap-2 transition-all duration-300 border border-white/10 group-hover:border-[#00dc93]"
                   >
-                    <span>{t.discussProject}</span>
+                    <span>{service.ctaText}</span>
                     <ArrowRight className="w-4 h-4" />
                   </a>
                 </div>

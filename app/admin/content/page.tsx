@@ -1,28 +1,201 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import { ServiceItem } from '@/lib/services';
 import { TRANSLATIONS } from '@/lib/translations';
-import { FileText, Edit3, Plus, Globe2, CreditCard, HelpCircle, Quote } from 'lucide-react';
+import { Plus, Edit3, Trash2, CheckCircle2, AlertCircle, Eye, EyeOff, Globe2, HelpCircle, Save, X } from 'lucide-react';
 
 export default function AdminContentPage() {
-  const services = TRANSLATIONS.en.services.items;
+  const [services, setServices] = useState<ServiceItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [errorMsg, setErrorMsg] = useState('');
+  const [successMsg, setSuccessMsg] = useState('');
+
+  const [formData, setFormData] = useState({
+    title: '',
+    slug: '',
+    priceAmd: '',
+    description: '',
+    icon: 'Zap',
+    ctaText: 'Order Service →',
+    seoTitle: '',
+    seoDescription: '',
+    published: true,
+    featuresText: '',
+  });
+
+  const fetchServices = async () => {
+    try {
+      setLoading(true);
+      const res = await fetch('/api/admin/services');
+      const data = await res.json();
+      if (Array.isArray(data.services)) {
+        setServices(data.services);
+      }
+    } catch {
+      setErrorMsg('Failed to load services');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchServices();
+  }, []);
+
+  const openCreateModal = () => {
+    setEditingId(null);
+    setFormData({
+      title: '',
+      slug: '',
+      priceAmd: '',
+      description: '',
+      icon: 'Zap',
+      ctaText: 'Order Service →',
+      seoTitle: '',
+      seoDescription: '',
+      published: true,
+      featuresText: '',
+    });
+    setErrorMsg('');
+    setModalOpen(true);
+  };
+
+  const openEditModal = (service: ServiceItem) => {
+    setEditingId(service.id);
+    setFormData({
+      title: service.title,
+      slug: service.slug,
+      priceAmd: service.priceAmd,
+      description: service.description,
+      icon: service.icon || 'Zap',
+      ctaText: service.ctaText || 'Order Service →',
+      seoTitle: service.seoTitle || '',
+      seoDescription: service.seoDescription || '',
+      published: service.published,
+      featuresText: service.features.map((f) => f.text).join('\n'),
+    });
+    setErrorMsg('');
+    setModalOpen(true);
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSaving(true);
+    setErrorMsg('');
+
+    const featuresList = formData.featuresText
+      .split('\n')
+      .map((f) => f.trim())
+      .filter((f) => f.length > 0);
+
+    const payload = {
+      title: formData.title,
+      slug: formData.slug,
+      priceAmd: formData.priceAmd,
+      description: formData.description,
+      icon: formData.icon,
+      ctaText: formData.ctaText,
+      seoTitle: formData.seoTitle,
+      seoDescription: formData.seoDescription,
+      published: formData.published,
+      features: featuresList.map((text, idx) => ({ text, sortOrder: idx + 1 })),
+    };
+
+    try {
+      const url = editingId ? `/api/admin/services/${editingId}` : '/api/admin/services';
+      const method = editingId ? 'PUT' : 'POST';
+
+      const res = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok || !data.success) {
+        setErrorMsg(data.error || 'Failed to save service.');
+      } else {
+        setSuccessMsg(editingId ? 'Service updated successfully!' : 'Service created successfully!');
+        setModalOpen(false);
+        fetchServices();
+        setTimeout(() => setSuccessMsg(''), 3000);
+      }
+    } catch {
+      setErrorMsg('Failed to connect to server.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDelete = async (id: string, title: string) => {
+    if (!confirm(`Are you sure you want to delete service "${title}"?`)) return;
+
+    try {
+      const res = await fetch(`/api/admin/services/${id}`, { method: 'DELETE' });
+      const data = await res.json();
+
+      if (res.ok && data.success) {
+        setSuccessMsg('Service deleted.');
+        fetchServices();
+        setTimeout(() => setSuccessMsg(''), 3000);
+      } else {
+        setErrorMsg(data.error || 'Failed to delete service.');
+      }
+    } catch {
+      setErrorMsg('Failed to delete service.');
+    }
+  };
+
+  const handleTogglePublish = async (service: ServiceItem) => {
+    try {
+      const res = await fetch(`/api/admin/services/${service.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ published: !service.published }),
+      });
+      if (res.ok) {
+        fetchServices();
+      }
+    } catch {}
+  };
+
   const faq = TRANSLATIONS.en.faq.items;
 
   return (
     <div className="space-y-8 max-w-7xl mx-auto">
       
+      {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
-            Content & Services CMS<span className="text-[#00dc93]">.</span>
+            Content &amp; Services CMS<span className="text-[#00dc93]">.</span>
           </h1>
           <p className="text-xs text-slate-400 mt-1">
-            Manage service packages, AMD pricing tiers, client testimonials, and FAQ accordion entries.
+            PostgreSQL-backed CMS: Create, edit, publish/unpublish, reorder, and configure service packages.
           </p>
         </div>
+
+        {successMsg && (
+          <div className="px-4 py-2 rounded-xl bg-[#00dc93]/20 text-[#00dc93] text-xs font-bold flex items-center gap-2">
+            <CheckCircle2 className="w-4 h-4" />
+            <span>{successMsg}</span>
+          </div>
+        )}
+
+        {errorMsg && (
+          <div className="px-4 py-2 rounded-xl bg-red-500/20 text-red-400 text-xs font-bold flex items-center gap-2">
+            <AlertCircle className="w-4 h-4" />
+            <span>{errorMsg}</span>
+          </div>
+        )}
       </div>
 
-      {/* Services & Pricing Management */}
+      {/* Services CMS Management Section */}
       <div className="p-8 rounded-3xl bg-[#141722] border border-white/10 space-y-6">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -30,48 +203,91 @@ export default function AdminContentPage() {
               <Globe2 className="w-5 h-5" />
             </div>
             <div>
-              <h2 className="text-base font-extrabold text-white">Digital Service Packages & Pricing</h2>
-              <p className="text-xs text-slate-400">Configure public service descriptions and starting AMD pricing</p>
+              <h2 className="text-base font-extrabold text-white">Digital Service Packages ({services.length})</h2>
+              <p className="text-xs text-slate-400">PostgreSQL stored packages &amp; AMD pricing</p>
             </div>
           </div>
 
-          <button className="px-3.5 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-white font-bold text-xs flex items-center gap-1.5 border border-white/10">
-            <Plus className="w-4 h-4 text-[#00dc93]" />
-            <span>Add Service</span>
+          <button
+            onClick={openCreateModal}
+            className="px-4 py-2.5 rounded-xl bg-[#00dc93] hover:bg-[#38ef7d] text-black font-extrabold text-xs flex items-center gap-1.5 shadow-lg shadow-[#00dc93]/20 transition-all"
+          >
+            <Plus className="w-4 h-4" />
+            <span>Add New Service</span>
           </button>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {services.map((item, idx) => (
-            <div key={item.id} className="p-5 rounded-2xl bg-[#0b0c10] border border-white/5 space-y-3">
-              <div className="flex items-center justify-between text-xs font-mono">
-                <span className="text-[#00dc93] font-bold">0{idx + 1}</span>
-                <span className="text-white font-black">{item.price}</span>
+        {loading ? (
+          <div className="text-xs text-slate-400 p-8 text-center">Loading services from PostgreSQL...</div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {services.map((item, idx) => (
+              <div key={item.id} className="p-6 rounded-2xl bg-[#0b0c10] border border-white/10 space-y-4 flex flex-col justify-between">
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between border-b border-white/5 pb-3">
+                    <span className="text-2xl font-black text-slate-600 font-mono">0{idx + 1}</span>
+                    <span className="text-xs font-black text-[#00dc93] font-mono">{item.priceAmd}</span>
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-base font-bold text-white">{item.title}</h3>
+                    <button
+                      onClick={() => handleTogglePublish(item)}
+                      title={item.published ? 'Published (Click to unpublish)' : 'Draft (Click to publish)'}
+                      className={`p-1.5 rounded-lg text-xs font-bold flex items-center gap-1 ${
+                        item.published ? 'bg-[#00dc93]/20 text-[#00dc93]' : 'bg-amber-500/20 text-amber-400'
+                      }`}
+                    >
+                      {item.published ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
+                    </button>
+                  </div>
+
+                  <p className="text-xs text-slate-400 line-clamp-2 leading-relaxed">{item.description}</p>
+
+                  <div className="space-y-1.5 pt-2 border-t border-white/5">
+                    {item.features.slice(0, 3).map((f) => (
+                      <div key={f.text} className="text-[11px] text-slate-300 flex items-center gap-1.5">
+                        <span className="text-[#00dc93]">✓</span>
+                        <span>{f.text}</span>
+                      </div>
+                    ))}
+                    {item.features.length > 3 && (
+                      <div className="text-[10px] text-slate-500 italic">+ {item.features.length - 3} more features</div>
+                    )}
+                  </div>
+                </div>
+
+                <div className="pt-4 border-t border-white/5 flex items-center justify-between">
+                  <button
+                    onClick={() => openEditModal(item)}
+                    className="px-3 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 text-white font-bold text-xs flex items-center gap-1 transition-colors"
+                  >
+                    <Edit3 className="w-3.5 h-3.5 text-[#00dc93]" />
+                    <span>Edit</span>
+                  </button>
+
+                  <button
+                    onClick={() => handleDelete(item.id, item.title)}
+                    className="p-1.5 rounded-xl bg-red-500/10 hover:bg-red-500/20 text-red-400 text-xs transition-colors"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+                </div>
               </div>
-              <h3 className="text-sm font-bold text-white">{item.title}</h3>
-              <p className="text-[11px] text-slate-400 line-clamp-2 leading-relaxed">{item.desc}</p>
-              <div className="pt-2 flex justify-end">
-                <button className="text-[11px] font-bold text-[#00dc93] hover:underline flex items-center gap-1">
-                  <Edit3 className="w-3.5 h-3.5" />
-                  <span>Edit Package</span>
-                </button>
-              </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
       </div>
 
-      {/* FAQ Management */}
+      {/* FAQ Entries */}
       <div className="p-8 rounded-3xl bg-[#141722] border border-white/10 space-y-6">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-indigo-500/10 text-indigo-400 flex items-center justify-center">
-              <HelpCircle className="w-5 h-5" />
-            </div>
-            <div>
-              <h2 className="text-base font-extrabold text-white">FAQ Accordion Entries</h2>
-              <p className="text-xs text-slate-400">Questions and answers presented in the FAQ section</p>
-            </div>
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-indigo-500/10 text-indigo-400 flex items-center justify-center">
+            <HelpCircle className="w-5 h-5" />
+          </div>
+          <div>
+            <h2 className="text-base font-extrabold text-white">FAQ Accordion Entries</h2>
+            <p className="text-xs text-slate-400">Questions and answers presented in the FAQ section</p>
           </div>
         </div>
 
@@ -89,6 +305,143 @@ export default function AdminContentPage() {
           ))}
         </div>
       </div>
+
+      {/* Create / Edit Service Modal */}
+      {modalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fadeIn">
+          <div className="w-full max-w-2xl rounded-3xl bg-[#141722] border border-white/15 p-6 sm:p-8 space-y-6 text-xs text-slate-300 max-h-[90vh] overflow-y-auto">
+            
+            <div className="flex items-center justify-between border-b border-white/10 pb-4">
+              <h3 className="text-base font-black text-white">
+                {editingId ? 'Edit Service Package' : 'Create New Service Package'}
+              </h3>
+              <button onClick={() => setModalOpen(false)} className="p-1 rounded-lg text-slate-400 hover:text-white">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {errorMsg && (
+              <div className="p-3.5 rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 text-xs flex items-center gap-2">
+                <AlertCircle className="w-4 h-4 shrink-0" />
+                <span>{errorMsg}</span>
+              </div>
+            )}
+
+            <form onSubmit={handleSubmit} className="space-y-5">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <label className="font-bold text-slate-300 uppercase">Service Title</label>
+                  <input
+                    type="text"
+                    required
+                    value={formData.title}
+                    onChange={(e) => {
+                      const newTitle = e.target.value;
+                      const autoSlug = newTitle.toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-');
+                      setFormData({ ...formData, title: newTitle, ...(!editingId && { slug: autoSlug }) });
+                    }}
+                    placeholder="e.g. Corporate Website"
+                    className="w-full px-4 py-3 rounded-xl bg-[#0b0c10] border border-white/10 text-white font-bold focus:outline-none focus:border-[#00dc93]"
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="font-bold text-slate-300 uppercase">URL Slug (Unique)</label>
+                  <input
+                    type="text"
+                    required
+                    value={formData.slug}
+                    onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
+                    placeholder="e.g. corporate-website"
+                    className="w-full px-4 py-3 rounded-xl bg-[#0b0c10] border border-white/10 text-white font-mono focus:outline-none focus:border-[#00dc93]"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <label className="font-bold text-slate-300 uppercase">Starting Price (AMD)</label>
+                  <input
+                    type="text"
+                    required
+                    value={formData.priceAmd}
+                    onChange={(e) => setFormData({ ...formData, priceAmd: e.target.value })}
+                    placeholder="e.g. 250,000 AMD"
+                    className="w-full px-4 py-3 rounded-xl bg-[#0b0c10] border border-white/10 text-white font-bold focus:outline-none focus:border-[#00dc93]"
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="font-bold text-slate-300 uppercase">CTA Button Text</label>
+                  <input
+                    type="text"
+                    value={formData.ctaText}
+                    onChange={(e) => setFormData({ ...formData, ctaText: e.target.value })}
+                    placeholder="Order Service →"
+                    className="w-full px-4 py-3 rounded-xl bg-[#0b0c10] border border-white/10 text-white font-bold focus:outline-none focus:border-[#00dc93]"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="font-bold text-slate-300 uppercase">Description</label>
+                <textarea
+                  required
+                  rows={3}
+                  value={formData.description}
+                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                  placeholder="Describe what this service package includes..."
+                  className="w-full px-4 py-3 rounded-xl bg-[#0b0c10] border border-white/10 text-white focus:outline-none focus:border-[#00dc93]"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="font-bold text-slate-300 uppercase">Feature Bullet Points (One per line)</label>
+                <textarea
+                  rows={4}
+                  value={formData.featuresText}
+                  onChange={(e) => setFormData({ ...formData, featuresText: e.target.value })}
+                  placeholder="Multi-language support&#10;Full CMS Admin Panel&#10;SEO-optimized architecture"
+                  className="w-full px-4 py-3 rounded-xl bg-[#0b0c10] border border-white/10 text-white font-mono focus:outline-none focus:border-[#00dc93]"
+                />
+              </div>
+
+              <div className="flex items-center gap-3 pt-2">
+                <input
+                  type="checkbox"
+                  id="published"
+                  checked={formData.published}
+                  onChange={(e) => setFormData({ ...formData, published: e.target.checked })}
+                  className="w-4 h-4 accent-[#00dc93] rounded"
+                />
+                <label htmlFor="published" className="font-bold text-white cursor-pointer">
+                  Publish service package to live website
+                </label>
+              </div>
+
+              <div className="flex justify-end gap-3 pt-4 border-t border-white/10">
+                <button
+                  type="button"
+                  onClick={() => setModalOpen(false)}
+                  className="px-5 py-3 rounded-xl bg-white/5 text-slate-300 hover:text-white font-bold"
+                >
+                  Cancel
+                </button>
+
+                <button
+                  type="submit"
+                  disabled={saving}
+                  className="px-6 py-3 rounded-xl bg-[#00dc93] text-black font-extrabold flex items-center gap-2 shadow-lg shadow-[#00dc93]/20 disabled:opacity-50"
+                >
+                  <Save className="w-4 h-4" />
+                  <span>{saving ? 'Saving...' : editingId ? 'Update Service' : 'Create Service'}</span>
+                </button>
+              </div>
+            </form>
+
+          </div>
+        </div>
+      )}
 
     </div>
   );

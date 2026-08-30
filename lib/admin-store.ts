@@ -26,6 +26,7 @@ export interface SiteSettings {
   instagram: string;
   linkedin: string;
   youtube: string;
+  websiteUrl: string;
 }
 
 export const INITIAL_LEADS: Lead[] = [
@@ -66,7 +67,7 @@ export const INITIAL_LEADS: Lead[] = [
 export const INITIAL_SETTINGS: SiteSettings = {
   siteName: 'eLab Digital Studio',
   siteDescription: 'Modern websites, landing pages, and e-commerce solutions in Armenia.',
-  logoUrl: 'https://elab.am/wp-content/uploads/2024/02/Artboard-2.svg',
+  logoUrl: '/logo.svg',
   phone: '+374 55 77 60 66',
   email: 'hello@elab.am',
   whatsapp: '+37455776066',
@@ -76,4 +77,5 @@ export const INITIAL_SETTINGS: SiteSettings = {
   instagram: 'https://www.instagram.com/elab.armenia/',
   linkedin: 'https://www.linkedin.com/company/elab-armenia/',
   youtube: 'https://www.youtube.com/@eLab-armenia',
+  websiteUrl: 'https://elab.am',
 };

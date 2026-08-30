@@ -208,16 +208,20 @@ model Media {
 // 11. Service Model
 // ------------------------------------------------------
 model Service {
-  id          String           @id @default(cuid())
-  slug        String           @unique
-  title       String
-  priceAmd    String
-  description String
-  sortOrder   Int              @default(0)
-  published   Boolean          @default(true)
-  features    ServiceFeature[]
-  createdAt   DateTime         @default(now())
-  updatedAt   DateTime         @updatedAt
+  id             String           @id @default(cuid())
+  slug           String           @unique
+  title          String
+  priceAmd       String
+  description    String
+  icon           String?
+  ctaText        String?          @default("Order Service →")
+  seoTitle       String?
+  seoDescription String?
+  sortOrder      Int              @default(0)
+  published      Boolean          @default(true)
+  features       ServiceFeature[]
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
 
   @@index([slug])
   @@index([published])
