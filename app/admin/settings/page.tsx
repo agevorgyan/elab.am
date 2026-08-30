@@ -1,12 +1,14 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { INITIAL_SETTINGS, SiteSettings } from '@/lib/admin-store';
-import { Settings, Phone, Mail, Globe, Save, CheckCircle2, ShieldCheck, KeyRound } from 'lucide-react';
+import { Settings, Phone, Mail, Globe, Save, CheckCircle2, AlertCircle, KeyRound } from 'lucide-react';
 
 export default function AdminSettingsPage() {
   const [settings, setSettings] = useState<SiteSettings>(INITIAL_SETTINGS);
+  const [loading, setLoading] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [errorMsg, setErrorMsg] = useState('');
 
   const [passwordState, setPasswordState] = useState({
     currentPassword: '',
@@ -15,6 +17,18 @@ export default function AdminSettingsPage() {
   });
   const [passwordSaved, setPasswordSaved] = useState(false);
 
+  // Fetch real database settings on mount
+  useEffect(() => {
+    fetch('/api/admin/settings')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.settings) {
+          setSettings(data.settings);
+        }
+      })
+      .catch(() => {});
+  }, []);
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setSettings((prev) => ({
       ...prev,
@@ -22,10 +36,35 @@ export default function AdminSettingsPage() {
     }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setSaved(true);
-    setTimeout(() => setSaved(false), 3000);
+    setLoading(true);
+    setSaved(false);
+    setErrorMsg('');
+
+    try {
+      const res = await fetch('/api/admin/settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(settings),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok || !data.success) {
+        setErrorMsg(data.error || 'Database save failed.');
+      } else {
+        setSaved(true);
+        if (data.settings) {
+          setSettings(data.settings);
+        }
+        setTimeout(() => setSaved(false), 3500);
+      }
+    } catch {
+      setErrorMsg('Database network connection error.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handlePasswordChange = (e: React.FormEvent) => {
@@ -42,31 +81,38 @@ export default function AdminSettingsPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
-            Site Settings & Security<span className="text-[#00dc93]">.</span>
+            Site Settings &amp; CMS<span className="text-[#00dc93]">.</span>
           </h1>
           <p className="text-xs text-slate-400 mt-1">
-            Configure branding assets, contact info, social links, and admin authentication passwords.
+            Database-backed CMS settings: Configure branding assets, contact info, social links, and admin security.
           </p>
         </div>
 
         {saved && (
           <div className="px-4 py-2 rounded-xl bg-[#00dc93]/20 border border-[#00dc93]/40 text-[#00dc93] text-xs font-bold flex items-center gap-2 animate-fadeIn">
             <CheckCircle2 className="w-4 h-4" />
-            <span>Settings Saved!</span>
+            <span>Database Saved Permanently!</span>
+          </div>
+        )}
+
+        {errorMsg && (
+          <div className="px-4 py-2 rounded-xl bg-red-500/20 border border-red-500/40 text-red-400 text-xs font-bold flex items-center gap-2 animate-fadeIn">
+            <AlertCircle className="w-4 h-4" />
+            <span>{errorMsg}</span>
           </div>
         )}
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-8">
         
-        {/* Contact Settings (Rule #13) */}
+        {/* Contact Settings */}
         <div className="p-8 rounded-3xl bg-[#141722] border border-white/10 space-y-6">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-[#00dc93]/10 text-[#00dc93] flex items-center justify-center">
               <Phone className="w-5 h-5" />
             </div>
             <div>
-              <h2 className="text-base font-extrabold text-white">Contact & Communication Settings</h2>
+              <h2 className="text-base font-extrabold text-white">Contact &amp; Communication Settings</h2>
               <p className="text-xs text-slate-400">Direct phone numbers and lead email destinations</p>
             </div>
           </div>
@@ -118,7 +164,7 @@ export default function AdminSettingsPage() {
           </div>
         </div>
 
-        {/* Social Networks Settings (Rule #14) */}
+        {/* Social Networks Settings */}
         <div className="p-8 rounded-3xl bg-[#141722] border border-white/10 space-y-6">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-indigo-500/10 text-indigo-400 flex items-center justify-center">
@@ -181,16 +227,17 @@ export default function AdminSettingsPage() {
         <div className="flex justify-end">
           <button
             type="submit"
-            className="px-8 py-4 rounded-2xl bg-[#00dc93] text-black font-black text-xs flex items-center gap-2 shadow-xl shadow-[#00dc93]/20 hover:scale-[1.02] transition-all"
+            disabled={loading}
+            className="px-8 py-4 rounded-2xl bg-[#00dc93] hover:bg-[#38ef7d] text-black font-black text-xs flex items-center gap-2 shadow-xl shadow-[#00dc93]/20 hover:scale-[1.02] transition-all disabled:opacity-50"
           >
             <Save className="w-4 h-4" />
-            <span>Save All Settings</span>
+            <span>{loading ? 'Saving to Database...' : 'Save Settings to PostgreSQL'}</span>
           </button>
         </div>
 
       </form>
 
-      {/* Admin Change Password Section (Rule #16) */}
+      {/* Admin Change Password Section */}
       <form onSubmit={handlePasswordChange} className="p-8 rounded-3xl bg-[#141722] border border-white/10 space-y-6">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
