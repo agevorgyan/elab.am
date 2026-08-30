@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { getCurrentAdmin } from '@/lib/auth';
+import { hasPermission, ROUTE_PERMISSIONS, Permission } from '@/lib/rbac';
 import {
   LayoutDashboard,
   Users,
@@ -30,22 +31,32 @@ export default async function AdminLayout({
     return <>{children}</>;
   }
 
-  // Server-side database session verification (Rule #1, #6)
+  // Server-side database session verification
   const currentAdmin = await getCurrentAdmin();
 
   if (!currentAdmin) {
     redirect(`/admin/login?redirect=${encodeURIComponent(pathname)}`);
   }
 
-  const navItems = [
-    { href: '/admin/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-    { href: '/admin/leads', label: 'Leads & Mini CRM', icon: Users, badge: '2 New' },
-    { href: '/admin/portfolio', label: 'Portfolio CMS', icon: Briefcase },
-    { href: '/admin/content', label: 'Content & Services', icon: FileText },
-    { href: '/admin/media', label: 'Media Library', icon: ImageIcon },
-    { href: '/admin/seo', label: 'SEO Metadata', icon: Search },
-    { href: '/admin/settings', label: 'Site Settings', icon: Settings },
+  // Server-side RBAC Permission Verification for requested path (Rule #4)
+  const requiredPermission = ROUTE_PERMISSIONS[pathname];
+  if (requiredPermission && !hasPermission(currentAdmin.role, requiredPermission)) {
+    // If role lacks permission for requested route, redirect to /admin/dashboard
+    redirect('/admin/dashboard');
+  }
+
+  const allNavItems: { href: string; label: string; icon: React.ComponentType<{ className?: string }>; badge?: string; permission: Permission }[] = [
+    { href: '/admin/dashboard', label: 'Dashboard', icon: LayoutDashboard, permission: 'manage_portfolio' },
+    { href: '/admin/leads', label: 'Leads & Mini CRM', icon: Users, badge: '2 New', permission: 'manage_leads' },
+    { href: '/admin/portfolio', label: 'Portfolio CMS', icon: Briefcase, permission: 'manage_portfolio' },
+    { href: '/admin/content', label: 'Content & Services', icon: FileText, permission: 'manage_services' },
+    { href: '/admin/media', label: 'Media Library', icon: ImageIcon, permission: 'manage_media' },
+    { href: '/admin/seo', label: 'SEO Metadata', icon: Search, permission: 'manage_seo' },
+    { href: '/admin/settings', label: 'Site Settings', icon: Settings, permission: 'manage_settings' },
   ];
+
+  // Filter sidebar navigation according to active user role permissions (Rule #5)
+  const visibleNavItems = allNavItems.filter((item) => hasPermission(currentAdmin.role, item.permission));
 
   return (
     <div className="min-h-screen bg-[#090a0f] text-[#f8fafc] flex">
@@ -61,8 +72,11 @@ export default async function AdminLayout({
               alt="eLab Digital Studio Logo"
               className="h-12 sm:h-14 w-auto object-contain transition-transform group-hover:scale-105"
             />
-            <div className="text-[10px] text-[#00dc93] font-bold uppercase tracking-widest mt-1">
-              CMS + Mini CRM
+            <div className="text-[10px] text-[#00dc93] font-bold uppercase tracking-widest mt-1 flex items-center gap-1">
+              <span>CMS + Mini CRM</span>
+              <span className="px-1.5 py-0.5 rounded bg-white/10 text-white font-mono text-[9px]">
+                {currentAdmin.role}
+              </span>
             </div>
           </Link>
 
@@ -72,7 +86,7 @@ export default async function AdminLayout({
               Management
             </div>
 
-            {navItems.map((item) => {
+            {visibleNavItems.map((item) => {
               const Icon = item.icon;
               const isActive = pathname === item.href || (item.href !== '/admin/dashboard' && pathname.startsWith(item.href));
 
@@ -134,7 +148,7 @@ export default async function AdminLayout({
         <header className="h-16 border-b border-white/10 bg-[#0d0e14] px-6 flex items-center justify-between">
           <div className="flex items-center gap-2 text-xs text-slate-400">
             <ShieldCheck className="w-4 h-4 text-[#00dc93]" />
-            <span className="font-mono text-slate-300">Server Verified Admin Session ({currentAdmin.role})</span>
+            <span className="font-mono text-slate-300">RBAC Verified Session: <strong className="text-white">{currentAdmin.role}</strong></span>
           </div>
 
           <div className="flex items-center gap-4">

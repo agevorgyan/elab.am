@@ -3,6 +3,7 @@ import crypto from 'crypto';
 import prisma from '@/lib/prisma';
 import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
+import { hasPermission, Permission } from '@/lib/rbac';
 
 export const SESSION_COOKIE_NAME = 'elab_session_token';
 const SESSION_EXPIRATION_DAYS = 7;
@@ -87,7 +88,6 @@ export async function getCurrentAdmin() {
 
   if (!session) return null;
 
-  // Check expiration
   if (new Date() > session.expiresAt) {
     await prisma.session.delete({ where: { token } }).catch(() => {});
     return null;
@@ -97,9 +97,9 @@ export async function getCurrentAdmin() {
 }
 
 /**
- * Requires server-side admin authentication for API endpoints
+ * Requires server-side admin authentication and specific permission for API endpoints
  */
-export async function requireAdminAuth() {
+export async function requireAdminPermission(permission: Permission) {
   const user = await getCurrentAdmin();
   if (!user) {
     return {
@@ -110,6 +110,17 @@ export async function requireAdminAuth() {
       ),
     };
   }
+
+  if (!hasPermission(user.role, permission)) {
+    return {
+      user,
+      errorResponse: NextResponse.json(
+        { error: `Forbidden. Role '${user.role}' lacks '${permission}' permission.` },
+        { status: 403 }
+      ),
+    };
+  }
+
   return { user, errorResponse: null };
 }
 
