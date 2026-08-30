@@ -15,8 +15,6 @@ import {
   Bell,
   ShieldCheck,
   ChevronRight,
-  Sparkles,
-  Layers,
 } from 'lucide-react';
 
 export default function AdminLayout({
@@ -25,7 +23,6 @@ export default function AdminLayout({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(true);
 
   if (pathname === '/admin/login') {
     return <>{children}</>;
@@ -33,7 +30,7 @@ export default function AdminLayout({
 
   const navItems = [
     { href: '/admin/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-    { href: '/admin/leads', label: 'Leads & Mini CRM', icon: Users, badge: '3 New' },
+    { href: '/admin/leads', label: 'Leads & Mini CRM', icon: Users, badge: '2 New' },
     { href: '/admin/portfolio', label: 'Portfolio CMS', icon: Briefcase },
     { href: '/admin/content', label: 'Content & Services', icon: FileText },
     { href: '/admin/media', label: 'Media Library', icon: ImageIcon },
@@ -44,25 +41,19 @@ export default function AdminLayout({
   return (
     <div className="min-h-screen bg-[#090a0f] text-[#f8fafc] flex">
       
-      {/* Sidebar Navigation (Rule #10 & #66) */}
+      {/* Sidebar Navigation */}
       <aside className="w-64 bg-[#0d0e14] border-r border-white/10 flex flex-col justify-between p-5 shrink-0 hidden md:flex">
         <div className="space-y-8">
           
-          {/* Admin Header Logo */}
-          <Link href="/admin/dashboard" className="flex items-center gap-3 group">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-[#00dc93] to-[#3b82f6] p-[2px]">
-              <div className="w-full h-full bg-[#0b0c10] rounded-[10px] flex items-center justify-center">
-                <span className="font-extrabold text-lg text-white">e</span>
-                <span className="font-bold text-lg text-[#00dc93]">L</span>
-              </div>
-            </div>
-            <div>
-              <div className="font-black text-lg tracking-tight text-white flex items-center gap-1">
-                eLab<span className="text-[#00dc93]">Admin</span>
-              </div>
-              <div className="text-[10px] text-[#00dc93] font-bold uppercase tracking-widest -mt-1">
-                CMS + Mini CRM
-              </div>
+          {/* Official eLab SVG Logo in Admin Layout (Rules #1, #2) */}
+          <Link href="/admin/dashboard" className="block group">
+            <img
+              src="https://elab.am/wp-content/uploads/2024/02/Artboard-2.svg"
+              alt="eLab Digital Studio Logo"
+              className="h-8 w-auto object-contain transition-transform group-hover:scale-105"
+            />
+            <div className="text-[10px] text-[#00dc93] font-bold uppercase tracking-widest mt-1">
+              CMS + Mini CRM
             </div>
           </Link>
 
@@ -112,7 +103,7 @@ export default function AdminLayout({
             </div>
             <div className="truncate">
               <div className="text-xs font-extrabold text-white truncate">Avetis (Super Admin)</div>
-              <div className="text-[10px] text-[#00dc93] font-mono truncate">avetis@elab.am</div>
+              <div className="text-[10px] text-[#00dc93] font-mono truncate">hello@elab.am</div>
             </div>
           </div>
 

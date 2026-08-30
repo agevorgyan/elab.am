@@ -1,6 +1,6 @@
 import React from 'react';
 import Link from 'next/link';
-import { ArrowLeft, Home, Layers, Sparkles } from 'lucide-react';
+import { Home, Layers, Sparkles } from 'lucide-react';
 
 export default function NotFound() {
   return (
@@ -9,16 +9,12 @@ export default function NotFound() {
       {/* Simple Header */}
       <header className="p-6 border-b border-white/5">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-[#00dc93] to-[#3b82f6] p-[2px]">
-              <div className="w-full h-full bg-[#0b0c10] rounded-[10px] flex items-center justify-center">
-                <span className="font-extrabold text-lg text-white">e</span>
-                <span className="font-bold text-lg text-[#00dc93]">L</span>
-              </div>
-            </div>
-            <span className="font-black text-xl tracking-tight text-white">
-              eLab<span className="text-[#00dc93]">.am</span>
-            </span>
+          <Link href="/" className="inline-block group">
+            <img
+              src="https://elab.am/wp-content/uploads/2024/02/Artboard-2.svg"
+              alt="eLab Digital Studio Logo"
+              className="h-8 w-auto object-contain transition-transform group-hover:scale-105"
+            />
           </Link>
         </div>
       </header>
@@ -51,7 +47,7 @@ export default function NotFound() {
           </Link>
 
           <Link
-            href="/#portfolio"
+            href="/work"
             className="w-full sm:w-auto px-7 py-4 rounded-2xl bg-[#141722] border border-white/10 hover:border-white/20 text-white font-bold text-xs flex items-center justify-center gap-2 transition-colors"
           >
             <Layers className="w-4 h-4 text-[#00dc93]" />

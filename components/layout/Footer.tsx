@@ -29,18 +29,14 @@ export const Footer: React.FC<FooterProps> = ({ lang }) => {
         
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8">
           
-          {/* Company Info */}
+          {/* Official eLab SVG Logo in Footer (Rules #1, #2) */}
           <div className="lg:col-span-2 space-y-4">
-            <Link href="/" className="flex items-center gap-3 group">
-              <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-[#00dc93] to-[#3b82f6] p-[2px]">
-                <div className="w-full h-full bg-[#0b0c10] rounded-[10px] flex items-center justify-center">
-                  <span className="font-extrabold text-lg text-white">e</span>
-                  <span className="font-bold text-lg text-[#00dc93]">L</span>
-                </div>
-              </div>
-              <span className="font-black text-xl tracking-tight text-white">
-                eLab<span className="text-[#00dc93]">.am</span>
-              </span>
+            <Link href="/" className="inline-block group">
+              <img
+                src="https://elab.am/wp-content/uploads/2024/02/Artboard-2.svg"
+                alt="eLab Digital Studio Logo"
+                className="h-9 w-auto object-contain transition-transform group-hover:scale-105"
+              />
             </Link>
 
             <p className="text-xs text-slate-400 leading-relaxed max-w-sm">
@@ -111,7 +107,7 @@ export const Footer: React.FC<FooterProps> = ({ lang }) => {
             </ul>
           </div>
 
-          {/* Legal Documents Section (Rule #2 & #40) */}
+          {/* Legal Documents Section */}
           <div className="space-y-3">
             <h4 className="font-bold text-white uppercase text-xs tracking-wider">Legal & Privacy</h4>
             <ul className="space-y-2">
@@ -130,7 +126,7 @@ export const Footer: React.FC<FooterProps> = ({ lang }) => {
             </ul>
           </div>
 
-          {/* Contact Info */}
+          {/* Contact Info (Rules #3, #4) */}
           <div className="space-y-3">
             <h4 className="font-bold text-white uppercase text-xs tracking-wider">{t.contacts}</h4>
             <div className="space-y-2 text-xs">
@@ -138,9 +134,9 @@ export const Footer: React.FC<FooterProps> = ({ lang }) => {
                 <Phone className="w-3.5 h-3.5 text-[#00dc93]" />
                 <span>+374 55 77 60 66</span>
               </a>
-              <a href="mailto:info@elab.am" className="flex items-center gap-2 text-slate-300 hover:text-[#00dc93] transition-colors">
+              <a href="mailto:hello@elab.am" className="flex items-center gap-2 text-slate-300 hover:text-[#00dc93] transition-colors">
                 <Mail className="w-3.5 h-3.5 text-[#00dc93]" />
-                <span>info@elab.am</span>
+                <span>hello@elab.am</span>
               </a>
               <div className="text-slate-500 pt-1">
                 Yerevan, Armenia

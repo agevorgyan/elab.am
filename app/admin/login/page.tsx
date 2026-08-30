@@ -3,11 +3,11 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { ShieldCheck, Lock, Mail, ArrowRight, Sparkles } from 'lucide-react';
+import { ShieldCheck, Lock, Mail, ArrowRight } from 'lucide-react';
 
 export default function AdminLoginPage() {
   const router = useRouter();
-  const [email, setEmail] = useState('avetis@elab.am');
+  const [email, setEmail] = useState('hello@elab.am');
   const [password, setPassword] = useState('••••••••••••');
   const [loading, setLoading] = useState(false);
 
@@ -26,18 +26,14 @@ export default function AdminLoginPage() {
       
       <div className="w-full max-w-md space-y-8">
         
-        {/* Brand Header */}
+        {/* Official eLab SVG Logo on Login Screen (Rules #1, #2) */}
         <div className="text-center space-y-3">
-          <Link href="/" className="inline-flex items-center gap-3 group">
-            <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-[#00dc93] to-[#3b82f6] p-[2px] shadow-xl shadow-[#00dc93]/20">
-              <div className="w-full h-full bg-[#0b0c10] rounded-[14px] flex items-center justify-center">
-                <span className="font-extrabold text-2xl text-white">e</span>
-                <span className="font-bold text-2xl text-[#00dc93]">L</span>
-              </div>
-            </div>
-            <span className="font-black text-3xl tracking-tight text-white">
-              eLab<span className="text-[#00dc93]">Admin</span>
-            </span>
+          <Link href="/" className="inline-block group">
+            <img
+              src="https://elab.am/wp-content/uploads/2024/02/Artboard-2.svg"
+              alt="eLab Digital Studio Logo"
+              className="h-10 w-auto mx-auto object-contain transition-transform group-hover:scale-105"
+            />
           </Link>
 
           <p className="text-xs text-slate-400">

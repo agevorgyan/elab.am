@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Language, TRANSLATIONS } from '@/lib/translations';
-import { Phone, Mail, ChevronRight, ChevronDown, ExternalLink } from 'lucide-react';
+import { Phone, Mail, ChevronDown } from 'lucide-react';
 
 interface HeaderProps {
   lang?: Language;
@@ -32,7 +32,6 @@ export const Header: React.FC<HeaderProps> = ({
     }
   };
 
-  // Rule #18: Sticky header scroll behavior
   useEffect(() => {
     const handleScroll = () => {
       setScrolled(window.scrollY > 20);
@@ -41,7 +40,6 @@ export const Header: React.FC<HeaderProps> = ({
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // Rule #8: Body Scroll Lock
   useEffect(() => {
     if (menuOpen) {
       document.body.style.overflow = 'hidden';
@@ -53,7 +51,6 @@ export const Header: React.FC<HeaderProps> = ({
     };
   }, [menuOpen]);
 
-  // Rule #7: Close on Escape key press
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape' && menuOpen) {
@@ -89,21 +86,14 @@ export const Header: React.FC<HeaderProps> = ({
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between">
           
-          {/* 1. eLab Logo on Left (Rule #1) */}
+          {/* 1. Official eLab SVG Brand Logo (Rules #1, #2) */}
           <Link href="/" className="flex items-center gap-3 group z-50">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-[#00dc93] to-[#3b82f6] p-[2px] shadow-lg shadow-[#00dc93]/20 transition-transform group-hover:scale-105">
-              <div className="w-full h-full bg-[#0b0c10] rounded-[10px] flex items-center justify-center">
-                <span className="font-extrabold text-xl text-white tracking-tighter">e</span>
-                <span className="font-bold text-xl text-[#00dc93]">L</span>
-              </div>
-            </div>
-            <div className="flex flex-col">
-              <span className="font-black text-xl tracking-tight text-white flex items-center gap-1">
-                eLab<span className="text-[#00dc93]">.am</span>
-              </span>
-              <span className="text-[10px] text-slate-400 font-medium tracking-widest uppercase -mt-1">
-                Digital Studio
-              </span>
+            <div className="h-9 w-auto flex items-center justify-center">
+              <img
+                src="https://elab.am/wp-content/uploads/2024/02/Artboard-2.svg"
+                alt="eLab Digital Studio Logo"
+                className="h-8 sm:h-9 w-auto object-contain transition-transform group-hover:scale-105"
+              />
             </div>
           </Link>
 
@@ -137,7 +127,7 @@ export const Header: React.FC<HeaderProps> = ({
               <span>+374 55 77 60 66</span>
             </a>
 
-            {/* PREMIUM BURGER MENU TOGGLE BUTTON (Rules #1, #9, #17) */}
+            {/* Burger Menu Toggle */}
             <button
               type="button"
               onClick={() => setMenuOpen(!menuOpen)}
@@ -170,7 +160,7 @@ export const Header: React.FC<HeaderProps> = ({
         </div>
       </div>
 
-      {/* FULL-SCREEN / SPACIOUS OVERLAY BURGER MENU (Rules #2, #3, #11) */}
+      {/* Full-Screen Overlay Menu */}
       {menuOpen && (
         <div
           id="burger-menu-overlay"
@@ -178,10 +168,7 @@ export const Header: React.FC<HeaderProps> = ({
         >
           <div className="max-w-6xl mx-auto w-full grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
             
-            {/* Left/Main Column: Navigation Links (Rules #3, #4, #5) */}
             <nav className="lg:col-span-7 space-y-6">
-              
-              {/* Home */}
               <div>
                 <Link
                   href="/"
@@ -192,7 +179,6 @@ export const Header: React.FC<HeaderProps> = ({
                 </Link>
               </div>
 
-              {/* Services Submenu Accordion (Rule #4) */}
               <div className="space-y-2">
                 <button
                   onClick={() => setServicesOpen(!servicesOpen)}
@@ -218,7 +204,6 @@ export const Header: React.FC<HeaderProps> = ({
                 )}
               </div>
 
-              {/* Work / Portfolio Submenu Accordion (Rule #5) */}
               <div className="space-y-2">
                 <button
                   onClick={() => setWorkOpen(!workOpen)}
@@ -244,7 +229,6 @@ export const Header: React.FC<HeaderProps> = ({
                 )}
               </div>
 
-              {/* Why eLab */}
               <div>
                 <a
                   href="/#why-us"
@@ -255,7 +239,6 @@ export const Header: React.FC<HeaderProps> = ({
                 </a>
               </div>
 
-              {/* Process */}
               <div>
                 <a
                   href="/#process"
@@ -266,7 +249,6 @@ export const Header: React.FC<HeaderProps> = ({
                 </a>
               </div>
 
-              {/* Pricing */}
               <div>
                 <a
                   href="/#pricing"
@@ -277,7 +259,6 @@ export const Header: React.FC<HeaderProps> = ({
                 </a>
               </div>
 
-              {/* FAQ */}
               <div>
                 <a
                   href="/#faq"
@@ -288,7 +269,6 @@ export const Header: React.FC<HeaderProps> = ({
                 </a>
               </div>
 
-              {/* Contact */}
               <div>
                 <a
                   href="/#contact"
@@ -298,12 +278,9 @@ export const Header: React.FC<HeaderProps> = ({
                   Contact
                 </a>
               </div>
-
             </nav>
 
-            {/* Right Column: Contact Details, CTA & Social Links (Rules #14, #15) */}
             <div className="lg:col-span-5 space-y-8 p-8 rounded-3xl bg-[#141722] border border-white/10 shadow-2xl">
-              
               <div className="space-y-3">
                 <span className="text-xs font-bold text-[#00dc93] uppercase tracking-widest block">
                   Let's Build Something Better
@@ -313,7 +290,6 @@ export const Header: React.FC<HeaderProps> = ({
                 </h3>
               </div>
 
-              {/* Start Project CTA (Rule #14) */}
               <a
                 href="/#contact"
                 onClick={() => setMenuOpen(false)}
@@ -322,16 +298,15 @@ export const Header: React.FC<HeaderProps> = ({
                 <span>Start a Project →</span>
               </a>
 
-              {/* Contact Info (Rule #15) */}
               <div className="space-y-3 pt-4 border-t border-white/10 text-xs">
                 <a href="tel:+37455776066" className="flex items-center gap-3 text-white hover:text-[#00dc93] transition-colors font-bold text-sm">
                   <Phone className="w-4 h-4 text-[#00dc93]" />
                   <span>+374 55 77 60 66</span>
                 </a>
 
-                <a href="mailto:info@elab.am" className="flex items-center gap-3 text-slate-300 hover:text-[#00dc93] transition-colors font-medium">
+                <a href="mailto:hello@elab.am" className="flex items-center gap-3 text-slate-300 hover:text-[#00dc93] transition-colors font-medium">
                   <Mail className="w-4 h-4 text-[#00dc93]" />
-                  <span>info@elab.am</span>
+                  <span>hello@elab.am</span>
                 </a>
 
                 <div className="text-slate-500 pt-1">
@@ -339,7 +314,6 @@ export const Header: React.FC<HeaderProps> = ({
                 </div>
               </div>
 
-              {/* Social Channels (Rule #15) */}
               <div className="pt-4 border-t border-white/10 space-y-2">
                 <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">
                   Social Channels
@@ -359,7 +333,6 @@ export const Header: React.FC<HeaderProps> = ({
                   </a>
                 </div>
               </div>
-
             </div>
 
           </div>

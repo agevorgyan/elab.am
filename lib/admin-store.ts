@@ -16,6 +16,7 @@ export interface Lead {
 export interface SiteSettings {
   siteName: string;
   siteDescription: string;
+  logoUrl: string;
   phone: string;
   email: string;
   whatsapp: string;
@@ -60,29 +61,14 @@ export const INITIAL_LEADS: Lead[] = [
       { id: 'note-2', text: 'Called client on phone. Scheduled online demo for Tuesday.', date: '2026-08-29 16:00', author: 'Garegin' },
     ],
   },
-  {
-    id: 'lead-103',
-    name: 'David Hovhannisyan',
-    company: 'Mercury Construction',
-    phone: '+374 55 55 44 33',
-    email: 'david@mercury.am',
-    projectType: 'landing-page',
-    budget: '190,000 AMD',
-    message: 'Need a high-converting landing page for luxury townhouse developments.',
-    status: 'Won',
-    createdAt: '2026-08-28T09:00:00Z',
-    assignedTo: 'Avetis (Super Admin)',
-    notes: [
-      { id: 'note-3', text: 'Contract signed. Down payment received.', date: '2026-08-28 17:30', author: 'Avetis' },
-    ],
-  },
 ];
 
 export const INITIAL_SETTINGS: SiteSettings = {
   siteName: 'eLab Digital Studio',
   siteDescription: 'Modern websites, landing pages, and e-commerce solutions in Armenia.',
+  logoUrl: 'https://elab.am/wp-content/uploads/2024/02/Artboard-2.svg',
   phone: '+374 55 77 60 66',
-  email: 'info@elab.am',
+  email: 'hello@elab.am',
   whatsapp: '+37455776066',
   telegram: '@elab_armenia',
   address: 'Yerevan, Armenia',
