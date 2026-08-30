@@ -1,10 +1,10 @@
-import React, { Suspense } from 'react';
+import React from 'react';
 import { Metadata } from 'next';
 import Link from 'next/link';
-import { PORTFOLIO_PROJECTS } from '@/lib/portfolio-data';
+import { getPublishedPortfolioProjects } from '@/lib/portfolio-db';
 import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
-import { Layers, ArrowUpRight, Sparkles, Filter } from 'lucide-react';
+import { Layers, ArrowUpRight, Sparkles } from 'lucide-react';
 
 export const metadata: Metadata = {
   title: 'Selected Work & Case Studies | eLab Digital Studio Armenia',
@@ -29,6 +29,8 @@ export default async function WorkPage({ searchParams }: WorkPageProps) {
   const resolvedParams = await searchParams;
   const currentCategory = resolvedParams?.category || 'all';
 
+  const projects = await getPublishedPortfolioProjects();
+
   const categories = [
     { id: 'all', label: 'All Projects' },
     { id: 'corporate', label: 'Corporate' },
@@ -38,11 +40,11 @@ export default async function WorkPage({ searchParams }: WorkPageProps) {
   ];
 
   const filteredProjects = currentCategory === 'all'
-    ? PORTFOLIO_PROJECTS
-    : PORTFOLIO_PROJECTS.filter((p) => p.category === currentCategory);
+    ? projects
+    : projects.filter((p) => p.category === currentCategory);
 
-  const featuredProject = filteredProjects[0];
-  const gridProjects = filteredProjects.slice(1);
+  const featuredProject = filteredProjects.find((p) => p.featured) || filteredProjects[0];
+  const gridProjects = filteredProjects.filter((p) => p.id !== featuredProject?.id);
 
   return (
     <div className="min-h-screen bg-[#090a0f] text-[#f8fafc]">
@@ -94,7 +96,7 @@ export default async function WorkPage({ searchParams }: WorkPageProps) {
       <section className="py-12 bg-[#090a0f] relative">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-16">
           
-          {/* FEATURED HERO PROJECT (Rule #4) */}
+          {/* FEATURED HERO PROJECT */}
           {featuredProject && (
             <Link
               href={`/work/${featuredProject.slug}`}
@@ -102,7 +104,7 @@ export default async function WorkPage({ searchParams }: WorkPageProps) {
             >
               <div className="lg:col-span-7 relative h-72 lg:h-[450px] overflow-hidden bg-slate-900">
                 <img
-                  src={featuredProject.coverImage}
+                  src={featuredProject.heroImage || ''}
                   alt={featuredProject.title}
                   className="w-full h-full object-cover object-top transition-transform duration-700 group-hover:scale-105"
                 />
@@ -118,7 +120,7 @@ export default async function WorkPage({ searchParams }: WorkPageProps) {
                 <div className="space-y-4">
                   <div className="flex items-center justify-between text-xs">
                     <span className="px-3 py-1 rounded-full bg-white/5 text-[#00dc93] font-bold border border-white/10">
-                      {featuredProject.categoryLabel.en}
+                      {featuredProject.categoryLabel || featuredProject.category}
                     </span>
                     <span className="font-mono text-slate-500 font-bold">{featuredProject.year}</span>
                   </div>
@@ -128,11 +130,11 @@ export default async function WorkPage({ searchParams }: WorkPageProps) {
                   </h2>
 
                   <p className="text-xs text-slate-300 leading-relaxed line-clamp-3">
-                    {featuredProject.description.en}
+                    {featuredProject.summary}
                   </p>
 
                   <div className="flex flex-wrap gap-2 pt-2">
-                    {featuredProject.technologies.map((tech) => (
+                    {featuredProject.services.map((tech) => (
                       <span
                         key={tech}
                         className="px-2.5 py-1 rounded bg-white/5 text-[11px] font-mono text-slate-300 border border-white/5"
@@ -153,7 +155,7 @@ export default async function WorkPage({ searchParams }: WorkPageProps) {
             </Link>
           )}
 
-          {/* EDITORIAL GRID (Rule #5) */}
+          {/* EDITORIAL GRID */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {gridProjects.map((project) => (
               <Link
@@ -163,7 +165,7 @@ export default async function WorkPage({ searchParams }: WorkPageProps) {
               >
                 <div className="relative h-60 overflow-hidden bg-slate-900">
                   <img
-                    src={project.coverImage}
+                    src={project.heroImage || ''}
                     alt={project.title}
                     className="w-full h-full object-cover object-top transition-transform duration-700 group-hover:scale-105"
                     loading="lazy"
@@ -172,7 +174,7 @@ export default async function WorkPage({ searchParams }: WorkPageProps) {
 
                   <div className="absolute top-4 left-4">
                     <span className="px-3 py-1 rounded-full bg-[#0b0c10]/80 backdrop-blur-md text-[11px] font-bold text-[#00dc93] border border-white/10">
-                      {project.categoryLabel.en}
+                      {project.categoryLabel || project.category}
                     </span>
                   </div>
 
@@ -192,11 +194,11 @@ export default async function WorkPage({ searchParams }: WorkPageProps) {
                   </div>
 
                   <p className="text-xs text-slate-400 line-clamp-2 leading-relaxed">
-                    {project.description.en}
+                    {project.summary}
                   </p>
 
                   <div className="flex flex-wrap gap-1.5 pt-2 border-t border-white/5">
-                    {project.technologies.map((tech) => (
+                    {project.services.map((tech) => (
                       <span
                         key={tech}
                         className="px-2 py-0.5 rounded bg-white/5 text-[10px] font-mono text-slate-300 border border-white/5"
@@ -210,7 +212,7 @@ export default async function WorkPage({ searchParams }: WorkPageProps) {
             ))}
           </div>
 
-          {/* Contextual CTA (Rule #46) */}
+          {/* Contextual CTA */}
           <div className="p-10 rounded-3xl bg-gradient-to-r from-[#141722] via-[#181b26] to-[#141722] border border-[#00dc93]/30 text-center space-y-4 shadow-2xl">
             <h3 className="text-2xl sm:text-3xl font-black text-white">Need a custom website or digital solution like these?</h3>
             <p className="text-xs text-slate-300 max-w-xl mx-auto">

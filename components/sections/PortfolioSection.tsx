@@ -1,10 +1,11 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Language, TRANSLATIONS } from '@/lib/translations';
-import { PORTFOLIO_PROJECTS, PortfolioProject } from '@/lib/portfolio-data';
-import { ExternalLink, X, ArrowUpRight, Code, Layers, Sparkles } from 'lucide-react';
+import { DbPortfolioProject } from '@/lib/portfolio-db';
+import { PORTFOLIO_PROJECTS } from '@/lib/portfolio-data';
+import { ExternalLink, X, ArrowUpRight, Layers, Sparkles } from 'lucide-react';
 
 interface PortfolioSectionProps {
   lang: Language;
@@ -13,7 +14,19 @@ interface PortfolioSectionProps {
 export const PortfolioSection: React.FC<PortfolioSectionProps> = ({ lang }) => {
   const t = TRANSLATIONS[lang].portfolio;
   const [activeCategory, setActiveCategory] = useState<string>('all');
-  const [selectedProject, setSelectedProject] = useState<PortfolioProject | null>(null);
+  const [dbProjects, setDbProjects] = useState<DbPortfolioProject[]>([]);
+  const [selectedProject, setSelectedProject] = useState<DbPortfolioProject | null>(null);
+
+  useEffect(() => {
+    fetch('/api/portfolio')
+      .then((res) => res.json())
+      .then((data) => {
+        if (Array.isArray(data.projects) && data.projects.length > 0) {
+          setDbProjects(data.projects);
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   const categories = [
     { id: 'all', label: t.all },
@@ -23,12 +36,37 @@ export const PortfolioSection: React.FC<PortfolioSectionProps> = ({ lang }) => {
     { id: 'business-card', label: t.businessCard },
   ];
 
-  const filteredProjects = activeCategory === 'all'
-    ? PORTFOLIO_PROJECTS
-    : PORTFOLIO_PROJECTS.filter((p) => p.category === activeCategory);
+  // Map dbProjects or fallback to initial PORTFOLIO_PROJECTS
+  const allList: DbPortfolioProject[] = dbProjects.length > 0
+    ? dbProjects
+    : PORTFOLIO_PROJECTS.map((p) => ({
+        id: p.id,
+        slug: p.slug,
+        title: p.title,
+        client: p.client,
+        category: p.category,
+        categoryLabel: p.categoryLabel[lang] || p.category,
+        summary: p.description[lang],
+        overview: p.overview[lang],
+        challenge: p.challenge[lang],
+        solution: p.solution[lang],
+        services: p.services,
+        results: p.results ? p.results.map((r) => `${r.value} ${r.label}`) : [],
+        year: String(p.year),
+        liveUrl: p.websiteUrl,
+        heroImage: p.coverImage,
+        featured: p.featured,
+        published: true,
+        sortOrder: p.order,
+        gallery: p.gallery ? p.gallery.map((url) => ({ url })) : [],
+      }));
 
-  const featuredProject = filteredProjects[0];
-  const gridProjects = filteredProjects.slice(1);
+  const filteredProjects = activeCategory === 'all'
+    ? allList
+    : allList.filter((p) => p.category === activeCategory);
+
+  const featuredProject = filteredProjects.find((p) => p.featured) || filteredProjects[0];
+  const gridProjects = filteredProjects.filter((p) => p.id !== featuredProject?.id);
 
   return (
     <section id="portfolio" className="py-24 bg-[#090a0f] relative">
@@ -65,7 +103,7 @@ export const PortfolioSection: React.FC<PortfolioSectionProps> = ({ lang }) => {
           ))}
         </div>
 
-        {/* FEATURED HERO PROJECT (Rule #4) */}
+        {/* FEATURED HERO PROJECT */}
         {featuredProject && (
           <div
             onClick={() => setSelectedProject(featuredProject)}
@@ -73,7 +111,7 @@ export const PortfolioSection: React.FC<PortfolioSectionProps> = ({ lang }) => {
           >
             <div className="lg:col-span-7 relative h-72 lg:h-[420px] overflow-hidden bg-slate-900">
               <img
-                src={featuredProject.coverImage}
+                src={featuredProject.heroImage || ''}
                 alt={featuredProject.title}
                 className="w-full h-full object-cover object-top transition-transform duration-700 group-hover:scale-105"
               />
@@ -89,7 +127,7 @@ export const PortfolioSection: React.FC<PortfolioSectionProps> = ({ lang }) => {
               <div className="space-y-4">
                 <div className="flex items-center justify-between text-xs">
                   <span className="px-3 py-1 rounded-full bg-white/5 text-[#00dc93] font-bold border border-white/10">
-                    {featuredProject.categoryLabel[lang]}
+                    {featuredProject.categoryLabel || featuredProject.category}
                   </span>
                   <span className="font-mono text-slate-500 font-bold">{featuredProject.year}</span>
                 </div>
@@ -99,11 +137,11 @@ export const PortfolioSection: React.FC<PortfolioSectionProps> = ({ lang }) => {
                 </h3>
 
                 <p className="text-xs text-slate-300 leading-relaxed line-clamp-3">
-                  {featuredProject.description[lang]}
+                  {featuredProject.summary}
                 </p>
 
                 <div className="flex flex-wrap gap-2 pt-2">
-                  {featuredProject.technologies.map((tech) => (
+                  {featuredProject.services.map((tech) => (
                     <span
                       key={tech}
                       className="px-2.5 py-1 rounded bg-white/5 text-[11px] font-mono text-slate-300 border border-white/5"
@@ -124,7 +162,7 @@ export const PortfolioSection: React.FC<PortfolioSectionProps> = ({ lang }) => {
           </div>
         )}
 
-        {/* EDITORIAL GRID (Rule #5) */}
+        {/* EDITORIAL GRID */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {gridProjects.map((project) => (
             <div
@@ -134,7 +172,7 @@ export const PortfolioSection: React.FC<PortfolioSectionProps> = ({ lang }) => {
             >
               <div className="relative h-60 overflow-hidden bg-slate-900">
                 <img
-                  src={project.coverImage}
+                  src={project.heroImage || ''}
                   alt={project.title}
                   className="w-full h-full object-cover object-top transition-transform duration-700 group-hover:scale-105"
                   loading="lazy"
@@ -143,7 +181,7 @@ export const PortfolioSection: React.FC<PortfolioSectionProps> = ({ lang }) => {
 
                 <div className="absolute top-4 left-4">
                   <span className="px-3 py-1 rounded-full bg-[#0b0c10]/80 backdrop-blur-md text-[11px] font-bold text-[#00dc93] border border-white/10">
-                    {project.categoryLabel[lang]}
+                    {project.categoryLabel || project.category}
                   </span>
                 </div>
 
@@ -163,11 +201,11 @@ export const PortfolioSection: React.FC<PortfolioSectionProps> = ({ lang }) => {
                 </div>
 
                 <p className="text-xs text-slate-400 line-clamp-2 leading-relaxed">
-                  {project.description[lang]}
+                  {project.summary}
                 </p>
 
                 <div className="flex flex-wrap gap-1.5 pt-2 border-t border-white/5">
-                  {project.technologies.map((tech) => (
+                  {project.services.map((tech) => (
                     <span
                       key={tech}
                       className="px-2 py-0.5 rounded bg-white/5 text-[10px] font-mono text-slate-300 border border-white/5"
@@ -187,7 +225,7 @@ export const PortfolioSection: React.FC<PortfolioSectionProps> = ({ lang }) => {
             href="/work"
             className="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-2xl bg-white/5 border border-white/10 hover:border-[#00dc93]/50 text-white hover:text-[#00dc93] font-bold text-xs transition-all shadow-lg"
           >
-            <span>View All Work & Dedicated Case Studies</span>
+            <span>View All Work &amp; Dedicated Case Studies</span>
             <ArrowUpRight className="w-4 h-4 text-[#00dc93]" />
           </Link>
         </div>
@@ -202,7 +240,7 @@ export const PortfolioSection: React.FC<PortfolioSectionProps> = ({ lang }) => {
             <div className="flex items-center justify-between border-b border-white/10 pb-4">
               <div>
                 <span className="text-xs font-bold text-[#00dc93] uppercase tracking-wider">
-                  {selectedProject.categoryLabel[lang]}
+                  {selectedProject.categoryLabel || selectedProject.category}
                 </span>
                 <h3 className="text-2xl sm:text-3xl font-black text-white mt-0.5">
                   {selectedProject.title}
@@ -218,7 +256,7 @@ export const PortfolioSection: React.FC<PortfolioSectionProps> = ({ lang }) => {
 
             <div className="rounded-2xl overflow-hidden border border-white/10 max-h-80">
               <img
-                src={selectedProject.coverImage}
+                src={selectedProject.heroImage || ''}
                 alt={selectedProject.title}
                 className="w-full h-full object-cover object-top"
               />
@@ -235,11 +273,11 @@ export const PortfolioSection: React.FC<PortfolioSectionProps> = ({ lang }) => {
               </div>
               <div>
                 <div className="text-slate-400 font-medium">{t.modal.category}</div>
-                <div className="text-white font-bold mt-0.5">{selectedProject.categoryLabel[lang]}</div>
+                <div className="text-white font-bold mt-0.5">{selectedProject.categoryLabel || selectedProject.category}</div>
               </div>
               <div>
                 <div className="text-slate-400 font-medium">Market</div>
-                <div className="text-[#00dc93] font-bold mt-0.5">Armenia & Global</div>
+                <div className="text-[#00dc93] font-bold mt-0.5">Armenia &amp; Global</div>
               </div>
             </div>
 
@@ -248,30 +286,14 @@ export const PortfolioSection: React.FC<PortfolioSectionProps> = ({ lang }) => {
                 <h4 className="text-xs font-bold uppercase text-red-400 tracking-wider">
                   {t.modal.challenge}
                 </h4>
-                <p className="text-slate-300">{selectedProject.challenge[lang]}</p>
+                <p className="text-slate-300">{selectedProject.challenge}</p>
               </div>
 
               <div className="p-4 rounded-xl bg-[#0b0c10] border border-white/5 space-y-1.5">
                 <h4 className="text-xs font-bold uppercase text-[#00dc93] tracking-wider">
                   {t.modal.solution}
                 </h4>
-                <p className="text-slate-300">{selectedProject.solution[lang]}</p>
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider">
-                {t.modal.technologies}
-              </h4>
-              <div className="flex flex-wrap gap-2">
-                {selectedProject.technologies.map((tech: string) => (
-                  <span
-                    key={tech}
-                    className="px-3 py-1 rounded-lg bg-[#00dc93]/10 border border-[#00dc93]/30 text-[#00dc93] text-xs font-mono font-semibold"
-                  >
-                    {tech}
-                  </span>
-                ))}
+                <p className="text-slate-300">{selectedProject.solution}</p>
               </div>
             </div>
 
@@ -284,9 +306,9 @@ export const PortfolioSection: React.FC<PortfolioSectionProps> = ({ lang }) => {
                 Read Dedicated Case Study Page →
               </Link>
 
-              {selectedProject.websiteUrl && (
+              {selectedProject.liveUrl && (
                 <a
-                  href={selectedProject.websiteUrl}
+                  href={selectedProject.liveUrl}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="w-full sm:w-auto px-6 py-3 rounded-xl bg-white/5 border border-white/10 hover:border-white/20 text-white font-bold text-xs text-center flex items-center justify-center gap-2 transition-colors"

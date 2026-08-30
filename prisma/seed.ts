@@ -1,10 +1,11 @@
 import { PrismaClient, Role, LeadStatus } from '@prisma/client';
 import argon2 from 'argon2';
+import { PORTFOLIO_PROJECTS } from '../lib/portfolio-data';
 
 const prisma = new PrismaClient();
 
 async function main() {
-  console.log('🌱 Seeding eLab.am production database, services & Argon2id SUPER_ADMIN...');
+  console.log('🌱 Seeding eLab.am production database, portfolio projects & Argon2id SUPER_ADMIN...');
 
   const adminEmail = process.env.ADMIN_EMAIL || process.env.INITIAL_ADMIN_EMAIL || 'admin@elab.am';
   const rawPassword = process.env.ADMIN_PASSWORD || process.env.INITIAL_ADMIN_PASSWORD || 'SuperAdmin2026!';
@@ -94,7 +95,10 @@ async function main() {
     {
       slug: 'landing-page',
       title: 'Landing Pages (Լենդինգ Էջ)',
-      priceAmd: '150,000 AMD',
+      priceAmd: '150,000',
+      priceCurrency: 'AMD',
+      showPrice: true,
+      priceLabel: 'Starting from',
       description: 'High-conversion single-page site designed specifically for advertising campaigns, lead generation, and product launches.',
       icon: 'Zap',
       ctaText: 'Order Landing Page →',
@@ -110,7 +114,10 @@ async function main() {
     {
       slug: 'corporate-website',
       title: 'Corporate Websites (Կորպորատիվ Կայք)',
-      priceAmd: '250,000 AMD',
+      priceAmd: '250,000',
+      priceCurrency: 'AMD',
+      showPrice: true,
+      priceLabel: 'Starting from',
       description: 'Multi-page professional website for business reputation, brand trust, and organic search engine growth.',
       icon: 'Building',
       ctaText: 'Order Corporate Site →',
@@ -126,7 +133,10 @@ async function main() {
     {
       slug: 'online-store',
       title: 'Online Stores (Օնլայն Խանութ)',
-      priceAmd: '400,000 AMD',
+      priceAmd: '400,000',
+      priceCurrency: 'AMD',
+      showPrice: true,
+      priceLabel: 'Starting from',
       description: 'Full-featured e-commerce platform with payment gateway integration and order management.',
       icon: 'ShoppingBag',
       ctaText: 'Order Online Store →',
@@ -142,7 +152,10 @@ async function main() {
     {
       slug: 'restaurant-qr-menu',
       title: 'Restaurant QR Menus (Ռեստորանային QR)',
-      priceAmd: '120,000 AMD',
+      priceAmd: '120,000',
+      priceCurrency: 'AMD',
+      showPrice: true,
+      priceLabel: 'Starting from',
       description: 'Digital interactive QR code menu for restaurants, cafes, and hospitality venues.',
       icon: 'QrCode',
       ctaText: 'Order QR Menu →',
@@ -158,7 +171,10 @@ async function main() {
     {
       slug: 'business-card-website',
       title: 'Business Card Websites (Այցեքարտ Կայք)',
-      priceAmd: '80,000 AMD',
+      priceAmd: '80,000',
+      priceCurrency: 'AMD',
+      showPrice: true,
+      priceLabel: 'Starting from',
       description: 'Compact digital business card presenting essential services, credentials, and contact details.',
       icon: 'UserCheck',
       ctaText: 'Order Business Card →',
@@ -195,7 +211,64 @@ async function main() {
   }
   console.log('✅ Services CMS content seeded.');
 
-  // 5. Seed Sample Lead & Note
+  // 5. Seed Existing Portfolio Projects into PostgreSQL
+  for (const p of PORTFOLIO_PROJECTS) {
+    const existingProject = await prisma.portfolioProject.findUnique({ where: { slug: p.slug } });
+
+    const resultsList = p.results ? p.results.map((r) => `${r.value} ${r.label}`) : [];
+    const galleryList = p.gallery || [];
+
+    if (!existingProject) {
+      await prisma.portfolioProject.create({
+        data: {
+          slug: p.slug,
+          title: p.title,
+          client: p.client,
+          category: p.category,
+          categoryLabel: p.categoryLabel.en,
+          summary: p.description.en,
+          overview: p.overview.en,
+          challenge: p.challenge.en,
+          solution: p.solution.en,
+          services: p.services,
+          results: resultsList,
+          year: String(p.year),
+          liveUrl: p.websiteUrl || null,
+          heroImage: p.coverImage,
+          featured: p.featured,
+          published: true,
+          sortOrder: p.order,
+          images: {
+            create: galleryList.map((url, idx) => ({ url, sortOrder: idx + 1 })),
+          },
+        },
+      });
+    } else {
+      await prisma.portfolioProject.update({
+        where: { slug: p.slug },
+        data: {
+          title: p.title,
+          client: p.client,
+          category: p.category,
+          categoryLabel: p.categoryLabel.en,
+          summary: p.description.en,
+          overview: p.overview.en,
+          challenge: p.challenge.en,
+          solution: p.solution.en,
+          services: p.services,
+          results: resultsList,
+          year: String(p.year),
+          liveUrl: p.websiteUrl || null,
+          heroImage: p.coverImage,
+          featured: p.featured,
+          sortOrder: p.order,
+        },
+      });
+    }
+  }
+  console.log('✅ 6 Portfolio projects seeded into PostgreSQL.');
+
+  // 6. Seed Sample Lead & Note
   await prisma.lead.upsert({
     where: { id: 'lead-101' },
     update: {},

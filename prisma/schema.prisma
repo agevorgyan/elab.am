@@ -105,28 +105,35 @@ model PortfolioTechnology {
 // 6. PortfolioProject Model
 // ------------------------------------------------------
 model PortfolioProject {
-  id           String   @id @default(cuid())
-  slug         String   @unique
-  title        String
-  client       String
-  summary      String
-  challenge    String
-  solution     String
-  results      String[]
-  year         String
-  liveUrl      String?
-  heroImage    String?
-  featured     Boolean  @default(false)
-  published    Boolean  @default(true)
-  sortOrder    Int      @default(0)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  id             String   @id @default(cuid())
+  slug           String   @unique
+  title          String
+  client         String
+  category       String   @default("corporate")
+  categoryLabel  String?
+  summary        String
+  overview       String?
+  challenge      String
+  solution       String
+  services       String[]
+  technologies   PortfolioTechnology[]
+  results        String[]
+  year           String
+  liveUrl        String?
+  heroImage      String?
+  seoTitle       String?
+  seoDescription String?
+  featured       Boolean  @default(false)
+  published      Boolean  @default(true)
+  sortOrder      Int      @default(0)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 
-  categories   PortfolioCategory[]
-  technologies PortfolioTechnology[]
-  images       PortfolioImage[]
+  categories PortfolioCategory[]
+  images     PortfolioImage[]
 
   @@index([slug])
+  @@index([category])
   @@index([featured])
   @@index([published])
   @@index([createdAt])
