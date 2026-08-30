@@ -1,8 +1,9 @@
 'use client';
 
 import React, { useState } from 'react';
+import Link from 'next/link';
 import { Language, TRANSLATIONS } from '@/lib/translations';
-import { PORTFOLIO_PROJECTS, Project } from '@/lib/portfolio-data';
+import { PORTFOLIO_PROJECTS, PortfolioProject } from '@/lib/portfolio-data';
 import { ExternalLink, X, ArrowUpRight, Code, Layers, Sparkles } from 'lucide-react';
 
 interface PortfolioSectionProps {
@@ -12,7 +13,7 @@ interface PortfolioSectionProps {
 export const PortfolioSection: React.FC<PortfolioSectionProps> = ({ lang }) => {
   const t = TRANSLATIONS[lang].portfolio;
   const [activeCategory, setActiveCategory] = useState<string>('all');
-  const [selectedProject, setSelectedProject] = useState<Project | null>(null);
+  const [selectedProject, setSelectedProject] = useState<PortfolioProject | null>(null);
 
   const categories = [
     { id: 'all', label: t.all },
@@ -64,21 +65,18 @@ export const PortfolioSection: React.FC<PortfolioSectionProps> = ({ lang }) => {
           ))}
         </div>
 
-        {/* FEATURED HERO PROJECT (Rule #8) */}
+        {/* FEATURED HERO PROJECT (Rule #4) */}
         {featuredProject && (
           <div
             onClick={() => setSelectedProject(featuredProject)}
             className="group cursor-pointer rounded-3xl bg-[#141722] border border-white/10 overflow-hidden hover:border-[#00dc93]/50 transition-all duration-500 mb-12 shadow-2xl hover:shadow-[#00dc93]/10 grid grid-cols-1 lg:grid-cols-12"
           >
-            {/* Featured Image */}
             <div className="lg:col-span-7 relative h-72 lg:h-[420px] overflow-hidden bg-slate-900">
               <img
                 src={featuredProject.coverImage}
                 alt={featuredProject.title}
                 className="w-full h-full object-cover object-top transition-transform duration-700 group-hover:scale-105"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-[#141722] via-transparent to-transparent opacity-60 lg:hidden" />
-              
               <div className="absolute top-4 left-4">
                 <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#00dc93] text-black font-extrabold text-[11px] shadow-md">
                   <Sparkles className="w-3 h-3" />
@@ -87,7 +85,6 @@ export const PortfolioSection: React.FC<PortfolioSectionProps> = ({ lang }) => {
               </div>
             </div>
 
-            {/* Featured Details */}
             <div className="lg:col-span-5 p-8 sm:p-10 flex flex-col justify-between space-y-6">
               <div className="space-y-4">
                 <div className="flex items-center justify-between text-xs">
@@ -105,7 +102,6 @@ export const PortfolioSection: React.FC<PortfolioSectionProps> = ({ lang }) => {
                   {featuredProject.description[lang]}
                 </p>
 
-                {/* Tech Badges */}
                 <div className="flex flex-wrap gap-2 pt-2">
                   {featuredProject.technologies.map((tech) => (
                     <span
@@ -118,7 +114,6 @@ export const PortfolioSection: React.FC<PortfolioSectionProps> = ({ lang }) => {
                 </div>
               </div>
 
-              {/* Action Trigger */}
               <div className="pt-4 border-t border-white/5 flex items-center justify-between text-xs font-bold text-[#00dc93]">
                 <span>{t.viewCase}</span>
                 <div className="w-10 h-10 rounded-full bg-[#00dc93]/10 border border-[#00dc93]/30 flex items-center justify-center group-hover:bg-[#00dc93] group-hover:text-black transition-colors">
@@ -129,7 +124,7 @@ export const PortfolioSection: React.FC<PortfolioSectionProps> = ({ lang }) => {
           </div>
         )}
 
-        {/* EDITORIAL GRID (Rule #9) */}
+        {/* EDITORIAL GRID (Rule #5) */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {gridProjects.map((project) => (
             <div
@@ -137,7 +132,6 @@ export const PortfolioSection: React.FC<PortfolioSectionProps> = ({ lang }) => {
               onClick={() => setSelectedProject(project)}
               className="group cursor-pointer rounded-2xl bg-[#141722] border border-white/10 overflow-hidden hover:border-[#00dc93]/50 transition-all duration-300 hover:-translate-y-1.5 shadow-xl hover:shadow-2xl hover:shadow-[#00dc93]/10 flex flex-col justify-between"
             >
-              {/* Project Image Preview */}
               <div className="relative h-60 overflow-hidden bg-slate-900">
                 <img
                   src={project.coverImage}
@@ -160,7 +154,6 @@ export const PortfolioSection: React.FC<PortfolioSectionProps> = ({ lang }) => {
                 </div>
               </div>
 
-              {/* Info Block */}
               <div className="p-6 space-y-3">
                 <div className="flex items-center justify-between">
                   <h3 className="text-lg font-extrabold text-white group-hover:text-[#00dc93] transition-colors">
@@ -186,6 +179,17 @@ export const PortfolioSection: React.FC<PortfolioSectionProps> = ({ lang }) => {
               </div>
             </div>
           ))}
+        </div>
+
+        {/* View All Work Link */}
+        <div className="text-center pt-12">
+          <Link
+            href="/work"
+            className="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-2xl bg-white/5 border border-white/10 hover:border-[#00dc93]/50 text-white hover:text-[#00dc93] font-bold text-xs transition-all shadow-lg"
+          >
+            <span>View All Work & Dedicated Case Studies</span>
+            <ArrowUpRight className="w-4 h-4 text-[#00dc93]" />
+          </Link>
         </div>
 
       </div>
@@ -260,7 +264,7 @@ export const PortfolioSection: React.FC<PortfolioSectionProps> = ({ lang }) => {
                 {t.modal.technologies}
               </h4>
               <div className="flex flex-wrap gap-2">
-                {selectedProject.technologies.map((tech) => (
+                {selectedProject.technologies.map((tech: string) => (
                   <span
                     key={tech}
                     className="px-3 py-1 rounded-lg bg-[#00dc93]/10 border border-[#00dc93]/30 text-[#00dc93] text-xs font-mono font-semibold"
@@ -272,13 +276,13 @@ export const PortfolioSection: React.FC<PortfolioSectionProps> = ({ lang }) => {
             </div>
 
             <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-4 border-t border-white/10">
-              <a
-                href="#contact"
+              <Link
+                href={`/work/${selectedProject.slug}`}
                 onClick={() => setSelectedProject(null)}
                 className="w-full sm:w-auto px-6 py-3 rounded-xl bg-[#00dc93] text-black font-extrabold text-xs text-center shadow-lg shadow-[#00dc93]/20 hover:scale-[1.02] transition-all"
               >
-                Start Similar Project
-              </a>
+                Read Dedicated Case Study Page →
+              </Link>
 
               {selectedProject.websiteUrl && (
                 <a
