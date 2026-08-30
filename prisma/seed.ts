@@ -265,14 +265,21 @@ async function main() {
     const resultsList = p.results ? p.results.map((r) => `${r.value} ${r.label}`) : [];
     const galleryList = p.gallery || [];
 
+    const catRecord = await prisma.portfolioCategory.findFirst({
+      where: {
+        OR: [
+          { slug: p.category },
+          { name: p.category },
+        ],
+      },
+    });
+
     if (!existingProject) {
       await prisma.portfolioProject.create({
         data: {
           slug: p.slug,
           title: p.title,
           client: p.client,
-          category: p.category,
-          categoryLabel: p.categoryLabel.en,
           summary: p.description.en,
           overview: p.overview.en,
           challenge: p.challenge.en,
@@ -285,6 +292,11 @@ async function main() {
           featured: p.featured,
           published: true,
           sortOrder: p.order,
+          ...(catRecord && {
+            categories: {
+              connect: [{ id: catRecord.id }],
+            },
+          }),
           images: {
             create: galleryList.map((url, idx) => ({ url, sortOrder: idx + 1 })),
           },
@@ -296,8 +308,6 @@ async function main() {
         data: {
           title: p.title,
           client: p.client,
-          category: p.category,
-          categoryLabel: p.categoryLabel.en,
           summary: p.description.en,
           overview: p.overview.en,
           challenge: p.challenge.en,
@@ -309,6 +319,11 @@ async function main() {
           heroImage: p.coverImage,
           featured: p.featured,
           sortOrder: p.order,
+          ...(catRecord && {
+            categories: {
+              set: [{ id: catRecord.id }],
+            },
+          }),
         },
       });
     }

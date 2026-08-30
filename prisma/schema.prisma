@@ -115,8 +115,6 @@ model PortfolioProject {
   slug           String   @unique
   title          String
   client         String
-  category       String   @default("corporate")
-  categoryLabel  String?
   summary        String
   overview       String?
   challenge      String
@@ -139,7 +137,6 @@ model PortfolioProject {
   images     PortfolioImage[]
 
   @@index([slug])
-  @@index([category])
   @@index([featured])
   @@index([published])
   @@index([createdAt])
