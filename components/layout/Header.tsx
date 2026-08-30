@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Language, TRANSLATIONS } from '@/lib/translations';
+import { Language } from '@/lib/translations';
 import { BrandLogo } from '@/components/ui/BrandLogo';
 import { Phone, Mail, ChevronDown } from 'lucide-react';
 
@@ -15,19 +15,16 @@ export const Header: React.FC<HeaderProps> = ({
   lang = 'hy',
   onLanguageChange,
 }) => {
-  const [currentLang, setCurrentLang] = useState<Language>(lang);
-  const t = TRANSLATIONS[currentLang].nav;
+  const [selectedLang, setSelectedLang] = useState<Language | null>(null);
+  const currentLang = selectedLang ?? lang;
+
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [servicesOpen, setServicesOpen] = useState(false);
   const [workOpen, setWorkOpen] = useState(false);
 
-  useEffect(() => {
-    setCurrentLang(lang);
-  }, [lang]);
-
   const handleLangSelect = (l: Language) => {
-    setCurrentLang(l);
+    setSelectedLang(l);
     if (onLanguageChange) {
       onLanguageChange(l);
     }

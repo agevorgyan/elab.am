@@ -30,7 +30,7 @@ export const Footer: React.FC<FooterProps> = ({ lang }) => {
         
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8">
           
-          {/* Centralized Managed eLab Brand Logo in Footer (Rule #7) */}
+          {/* Centralized Managed eLab Brand Logo in Footer */}
           <div className="lg:col-span-2 space-y-4">
             <BrandLogo href="/" className="h-14 sm:h-16 w-auto" />
 
@@ -94,17 +94,17 @@ export const Footer: React.FC<FooterProps> = ({ lang }) => {
           <div className="space-y-3">
             <h4 className="font-bold text-white uppercase text-xs tracking-wider">{t.quickLinks}</h4>
             <ul className="space-y-2">
-              <li><a href="/#services" className="hover:text-[#00dc93] transition-colors">Services</a></li>
+              <li><Link href="/#services" className="hover:text-[#00dc93] transition-colors">Services</Link></li>
               <li><Link href="/work" className="hover:text-[#00dc93] transition-colors">Portfolio Work</Link></li>
-              <li><a href="/#why-us" className="hover:text-[#00dc93] transition-colors">Why eLab</a></li>
-              <li><a href="/#process" className="hover:text-[#00dc93] transition-colors">Process</a></li>
-              <li><a href="/#pricing" className="hover:text-[#00dc93] transition-colors">Pricing Tiers</a></li>
+              <li><Link href="/#why-us" className="hover:text-[#00dc93] transition-colors">Why eLab</Link></li>
+              <li><Link href="/#process" className="hover:text-[#00dc93] transition-colors">Process</Link></li>
+              <li><Link href="/#pricing" className="hover:text-[#00dc93] transition-colors">Pricing Tiers</Link></li>
             </ul>
           </div>
 
           {/* Legal Documents Section */}
           <div className="space-y-3">
-            <h4 className="font-bold text-white uppercase text-xs tracking-wider">Legal & Privacy</h4>
+            <h4 className="font-bold text-white uppercase text-xs tracking-wider">Legal &amp; Privacy</h4>
             <ul className="space-y-2">
               <li><Link href="/terms" className="hover:text-[#00dc93] transition-colors">Terms of Use</Link></li>
               <li><Link href="/privacy" className="hover:text-[#00dc93] transition-colors">Privacy Policy</Link></li>
