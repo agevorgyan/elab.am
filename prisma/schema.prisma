@@ -1,6 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -9,6 +6,10 @@ datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
+
+// ------------------------------------------------------
+// Enums
+// ------------------------------------------------------
 
 enum Role {
   SUPER_ADMIN
@@ -25,6 +26,9 @@ enum LeadStatus {
   LOST
 }
 
+// ------------------------------------------------------
+// 1. User Model
+// ------------------------------------------------------
 model User {
   id           String     @id @default(cuid())
   name         String
@@ -33,9 +37,119 @@ model User {
   role         Role       @default(ADMIN)
   createdAt    DateTime   @default(now())
   updatedAt    DateTime   @updatedAt
-  leadNotes    LeadNote[]
+
+  sessions   Session[]
+  leadNotes  LeadNote[]
+  auditLogs  AuditLog[]
+
+  @@index([email])
+  @@index([role])
 }
 
+// ------------------------------------------------------
+// 2. Session Model
+// ------------------------------------------------------
+model Session {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  token     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([token])
+}
+
+// ------------------------------------------------------
+// 3. SiteSettings Model
+// ------------------------------------------------------
+model SiteSettings {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  value     String
+  category  String   @default("general")
+  updatedAt DateTime @updatedAt
+
+  @@index([key])
+  @@index([category])
+}
+
+// ------------------------------------------------------
+// 4. PortfolioCategory Model
+// ------------------------------------------------------
+model PortfolioCategory {
+  id        String             @id @default(cuid())
+  slug      String             @unique
+  name      String
+  sortOrder Int                @default(0)
+  projects  PortfolioProject[]
+
+  @@index([slug])
+}
+
+// ------------------------------------------------------
+// 5. PortfolioTechnology Model
+// ------------------------------------------------------
+model PortfolioTechnology {
+  id       String             @id @default(cuid())
+  slug     String             @unique
+  name     String
+  icon     String?
+  projects PortfolioProject[]
+
+  @@index([slug])
+}
+
+// ------------------------------------------------------
+// 6. PortfolioProject Model
+// ------------------------------------------------------
+model PortfolioProject {
+  id           String   @id @default(cuid())
+  slug         String   @unique
+  title        String
+  client       String
+  summary      String
+  challenge    String
+  solution     String
+  results      String[]
+  year         String
+  liveUrl      String?
+  heroImage    String?
+  featured     Boolean  @default(false)
+  published    Boolean  @default(true)
+  sortOrder    Int      @default(0)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  categories   PortfolioCategory[]
+  technologies PortfolioTechnology[]
+  images       PortfolioImage[]
+
+  @@index([slug])
+  @@index([featured])
+  @@index([published])
+  @@index([createdAt])
+}
+
+// ------------------------------------------------------
+// 7. PortfolioImage Model
+// ------------------------------------------------------
+model PortfolioImage {
+  id        String           @id @default(cuid())
+  projectId String
+  project   PortfolioProject @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  url       String
+  alt       String?
+  caption   String?
+  sortOrder Int              @default(0)
+
+  @@index([projectId])
+}
+
+// ------------------------------------------------------
+// 8. Lead Model
+// ------------------------------------------------------
 model Lead {
   id          String     @id @default(cuid())
   name        String
@@ -49,9 +163,17 @@ model Lead {
   assignedTo  String?
   createdAt   DateTime   @default(now())
   updatedAt   DateTime   @updatedAt
-  notes       LeadNote[]
+
+  notes LeadNote[]
+
+  @@index([status])
+  @@index([email])
+  @@index([createdAt])
 }
 
+// ------------------------------------------------------
+// 9. LeadNote Model
+// ------------------------------------------------------
 model LeadNote {
   id        String   @id @default(cuid())
   leadId    String
@@ -60,32 +182,153 @@ model LeadNote {
   author    User?    @relation(fields: [authorId], references: [id], onDelete: SetNull)
   text      String
   createdAt DateTime @default(now())
+
+  @@index([leadId])
+  @@index([authorId])
 }
 
-model PortfolioProject {
+// ------------------------------------------------------
+// 10. Media Model
+// ------------------------------------------------------
+model Media {
+  id        String   @id @default(cuid())
+  name      String
+  path      String   @unique
+  url       String
+  mimeType  String
+  sizeBytes Int
+  alt       String?
+  createdAt DateTime @default(now())
+
+  @@index([path])
+  @@index([mimeType])
+}
+
+// ------------------------------------------------------
+// 11. Service Model
+// ------------------------------------------------------
+model Service {
+  id          String           @id @default(cuid())
+  slug        String           @unique
+  title       String
+  priceAmd    String
+  description String
+  sortOrder   Int              @default(0)
+  published   Boolean          @default(true)
+  features    ServiceFeature[]
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  @@index([slug])
+  @@index([published])
+}
+
+// ------------------------------------------------------
+// 12. ServiceFeature Model
+// ------------------------------------------------------
+model ServiceFeature {
+  id        String  @id @default(cuid())
+  serviceId String
+  service   Service @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  text      String
+  sortOrder Int     @default(0)
+
+  @@index([serviceId])
+}
+
+// ------------------------------------------------------
+// 13. Testimonial Model
+// ------------------------------------------------------
+model Testimonial {
+  id        String   @id @default(cuid())
+  client    String
+  company   String
+  quote     String
+  rating    Int      @default(5)
+  avatarUrl String?
+  published Boolean  @default(true)
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+
+  @@index([published])
+}
+
+// ------------------------------------------------------
+// 14. FAQ Model
+// ------------------------------------------------------
+model FAQ {
+  id        String   @id @default(cuid())
+  question  String
+  answer    String
+  category  String   @default("general")
+  sortOrder Int      @default(0)
+  published Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  @@index([category])
+  @@index([published])
+}
+
+// ------------------------------------------------------
+// 15. SeoMetadata Model
+// ------------------------------------------------------
+model SeoMetadata {
+  id          String   @id @default(cuid())
+  path        String   @unique
+  title       String
+  description String
+  keywords    String[]
+  ogImage     String?
+  canonical   String?
+  updatedAt   DateTime @updatedAt
+
+  @@index([path])
+}
+
+// ------------------------------------------------------
+// 16. LegalPage Model
+// ------------------------------------------------------
+model LegalPage {
   id          String   @id @default(cuid())
   slug        String   @unique
   title       String
-  client      String
-  category    String
-  summary     String
-  challenge   String
-  solution    String
-  results     String[]
-  technologies String[]
-  year        String
-  liveUrl     String?
-  heroImage   String?
-  featured    Boolean  @default(false)
+  content     String
+  lastUpdated String
   published   Boolean  @default(true)
-  createdAt   DateTime @default(now())
+  version     Int      @default(1)
   updatedAt   DateTime @updatedAt
+
+  @@index([slug])
 }
 
-model SiteSetting {
+// ------------------------------------------------------
+// 17. CookieSettings Model
+// ------------------------------------------------------
+model CookieSettings {
+  id                String   @id @default(cuid())
+  version           Int      @default(1)
+  bannerEnabled     Boolean  @default(true)
+  analyticsEnabled  Boolean  @default(true)
+  marketingEnabled  Boolean  @default(false)
+  gaMeasurementId   String?
+  metaPixelId       String?
+  updatedAt         DateTime @updatedAt
+}
+
+// ------------------------------------------------------
+// 18. AuditLog Model
+// ------------------------------------------------------
+model AuditLog {
   id        String   @id @default(cuid())
-  key       String   @unique
-  value     String
-  category  String   @default("general")
-  updatedAt DateTime @updatedAt
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  action    String
+  resource  String
+  details   String?
+  ipAddress String?
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([action])
+  @@index([createdAt])
 }

@@ -3,7 +3,7 @@ import { PrismaClient, Role, LeadStatus } from '@prisma/client';
 const prisma = new PrismaClient();
 
 async function main() {
-  console.log('🌱 Starting eLab.am database seeding...');
+  console.log('🌱 Seeding eLab.am production database schema...');
 
   // 1. Seed Initial Super Admin User
   const admin = await prisma.user.upsert({
@@ -18,7 +18,21 @@ async function main() {
   });
   console.log('✅ Admin user seeded:', admin.email);
 
-  // 2. Seed Initial Site Settings
+  // 2. Seed Cookie Settings
+  await prisma.cookieSettings.upsert({
+    where: { id: 'default-cookie-settings' },
+    update: {},
+    create: {
+      id: 'default-cookie-settings',
+      version: 1,
+      bannerEnabled: true,
+      analyticsEnabled: true,
+      marketingEnabled: false,
+    },
+  });
+  console.log('✅ Cookie settings seeded.');
+
+  // 3. Seed Site Settings
   const settings = [
     { key: 'siteName', value: 'eLab Digital Studio', category: 'branding' },
     { key: 'siteDescription', value: 'Modern websites, landing pages, and e-commerce solutions in Armenia.', category: 'branding' },
@@ -33,7 +47,7 @@ async function main() {
   ];
 
   for (const item of settings) {
-    await prisma.siteSetting.upsert({
+    await prisma.siteSettings.upsert({
       where: { key: item.key },
       update: { value: item.value },
       create: item,
@@ -41,8 +55,45 @@ async function main() {
   }
   console.log('✅ Site settings seeded.');
 
-  // 3. Seed Initial Seed Lead
-  const lead = await prisma.lead.upsert({
+  // 4. Seed Categories
+  const categories = [
+    { slug: 'corporate', name: 'Corporate Websites', sortOrder: 1 },
+    { slug: 'ecommerce', name: 'Online Stores', sortOrder: 2 },
+    { slug: 'landing-page', name: 'Landing Pages', sortOrder: 3 },
+  ];
+
+  for (const cat of categories) {
+    await prisma.portfolioCategory.upsert({
+      where: { slug: cat.slug },
+      update: { name: cat.name },
+      create: cat,
+    });
+  }
+  console.log('✅ Portfolio categories seeded.');
+
+  // 5. Seed Portfolio Project
+  const project = await prisma.portfolioProject.upsert({
+    where: { slug: 'gayanes-kitchen' },
+    update: {},
+    create: {
+      slug: 'gayanes-kitchen',
+      title: "Gayane's Kitchen — Authentic Armenian Restaurant",
+      client: "Gayane's Hospitality LLC",
+      summary: 'High-converting online menu, reservation portal, and branding.',
+      challenge: 'Low online table booking conversion and slow mobile page load.',
+      solution: 'Custom Next.js restaurant site with sub-second page rendering.',
+      results: ['+140% Online Table Bookings', '0.4s Mobile Page Load', '99/100 Lighthouse Performance'],
+      year: '2025',
+      liveUrl: 'https://gayaneskitchen.com',
+      heroImage: 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=1200&q=80',
+      featured: true,
+      published: true,
+    },
+  });
+  console.log('✅ Portfolio project seeded:', project.title);
+
+  // 6. Seed Lead & Note
+  await prisma.lead.upsert({
     where: { id: 'lead-101' },
     update: {},
     create: {
@@ -63,9 +114,9 @@ async function main() {
       },
     },
   });
-  console.log('✅ Lead seeded:', lead.name);
+  console.log('✅ Sample lead seeded.');
 
-  console.log('🎉 Database seeding complete!');
+  console.log('🎉 Full schema database seeding complete!');
 }
 
 main()
