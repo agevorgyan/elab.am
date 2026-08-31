@@ -18,8 +18,12 @@ export async function POST(req: NextRequest) {
     }
 
     await destroyAdminSession();
-    return NextResponse.json({ success: true });
+    const contentType = req.headers.get('content-type') || '';
+    if (contentType.includes('application/json')) {
+      return NextResponse.json({ success: true });
+    }
+    return NextResponse.redirect(new URL('/admin/login', req.url), 303);
   } catch {
-    return NextResponse.json({ success: true });
+    return NextResponse.redirect(new URL('/admin/login', req.url), 303);
   }
 }

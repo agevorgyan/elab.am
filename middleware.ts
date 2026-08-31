@@ -19,14 +19,8 @@ export function middleware(req: NextRequest) {
 
   const isPublicAdminRoute = PUBLIC_ADMIN_PATHS.includes(pathname);
 
-  // CASE 1, 2, 8: Public admin routes requested by unauthenticated users -> Allow rendering
+  // Public admin routes -> Allow rendering (Server Components perform DB session verification)
   if (isPublicAdminRoute) {
-    // CASE 7: Authenticated user attempting to open public login route -> Redirect to /admin/dashboard
-    if (sessionToken) {
-      const dashboardUrl = new URL('/admin/dashboard', req.url);
-      return NextResponse.redirect(dashboardUrl);
-    }
-
     return NextResponse.next({
       request: {
         headers: requestHeaders,
